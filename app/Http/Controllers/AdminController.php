@@ -37,7 +37,6 @@ class AdminController extends Controller
             return back()->withErrors([
         'username' => 'Username atau password salah.',
     ]);
-
     }
 
     /**
