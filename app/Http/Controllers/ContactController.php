@@ -12,7 +12,7 @@ class ContactController extends Controller
         return view('contact');
     }
 
-    public function stor(Request $request)
+    public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|max:255',

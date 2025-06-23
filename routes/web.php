@@ -26,5 +26,5 @@
     Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
 
     Route::get('/contact', [ContactController::class, 'index'])->name('contact');
-    Route::get('/contaact', [ContactController::class, 'store'])->name('contact.store');
+    Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
