@@ -30,7 +30,7 @@ class AdminController extends Controller
         $adminUsername = 'admin'; // Ganti dengan username Anda
         $adminPassword = 'admin'; // Ganti dengan password Anda
 
-        if ($request ->username === $$adminUsername && $request->password === $adminPassword) {
+        if ($request->username === $adminUsername && $request->password === $adminPassword) {
             Session::put('admin_logged_in', true);
             return redirect()->route('admin.dashboard')->with('success', 'Login berhasil!');
         }
