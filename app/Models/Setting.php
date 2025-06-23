@@ -15,6 +15,7 @@ class Setting extends Model
         'type',
     ];
 
+
     /**
      * *  Mendapatkan nilai dari setting berdasarkan kunci.
      */
@@ -29,11 +30,11 @@ class Setting extends Model
       * * Menyimpan atau upadate setting.
       */
 
-      public static function set($key, $value, $type = 'text')
-      {
-        $setting = self::updateOrCreate(
+    public static function set($key, $value, $type = 'text')
+    {
+        return self::updateOrCreate(
             ['key' => $key],
             ['value' => $value, 'type' => $type]
-        );
-}
+    );
+    }
 }
