@@ -65,7 +65,7 @@ class AdminController extends Controller
             'site_title' => Setting::get('site_title', 'My Portfolio'),
             'site_description' => Setting::get('site_description', 'This is my portfolio website.'),
             'favicon' => Setting::get('favicon'),
-            'Profile' => Setting::get('Profile'),
+            'Profile' => Setting::get('profile'),
             'about_me' => Setting::get('about_me', 'Tell something about yourself'),
             'contact_email' => Setting::get('contact_email', 'your@email.com'),
             'github_url' => Setting::get('github_url'),
