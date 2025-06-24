@@ -1,42 +1,51 @@
-    <?php
+<?php
 
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\AdminController;
+use Illuminate\Support\Facades\Route;
 
-    use App\Http\Controllers\ContactController;
-    use App\Http\Controllers\HomeController;
-    use App\Http\Controllers\ProjectController;
-    use App\Http\Controllers\AdminAuthController;
-    use Illuminate\Support\Facades\Route;
-    use App\Http\Controllers\AdminController;
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "web" middleware group. Make something great!
+|
+*/
 
+// Public Routes
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/about', [HomeController::class, 'about'])->name('about');
 
-    /*
-    |--------------------------------------------------------------------------
-    | Web Routes
-    |--------------------------------------------------------------------------
-    |
-    | Here is where you can register web routes for your application. These
-    | routes are loaded by the RouteServiceProvider and all of them will
-    | be assigned to the "web" middleware group. Make something great!
-    |
-    */
+Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
+Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
 
-    Route::get('/', [HomeController::class, 'index'])->name('home');
-    Route::get('/about', [HomeController::class, 'about'])->name('about');
+Route::get('/contact', [ContactController::class, 'index'])->name('contact');
+Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
-    Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
-    Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
-
-    Route::get('/contact', [ContactController::class, 'index'])->name('contact');
-    Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
-
-    Route::prefix('hidden-admin-panel')->group(function () {
-    Route::get('/login', [AdminController::class, 'login'])->name('admin.login');
-    Route::post('/login', [AdminController::class, 'authenticate'])->name('admin.authenticate');
-    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
-    Route::get('/settings', [AdminController::class, 'settings'])->name('admin.settings');
-    Route::post('/settings', [AdminController::class, 'updateSettings'])->name('admin.settings.update');
-    Route::get('/messages', [AdminController::class, 'messages'])->name('admin.messages');
-    Route::delete('/messages/{id}', [AdminController::class, 'deleteMessage'])->name('admin.messages.delete');
-    Route::get('/projects', [AdminController::class, 'projects'])->name('admin.projects');
-    Route::post('/logout', [AdminController::class, 'logout'])->name('admin.logout');
+// Admin Routes
+Route::prefix('hidden-admin-panel')->name('admin.')->group(function () {
+    
+    // Routes yang tidak memerlukan middleware admin (login)
+    Route::get('/login', [AdminController::class, 'login'])->name('login');
+    Route::post('/login', [AdminController::class, 'authenticate'])->name('authenticate');
+    
+    // Routes yang memerlukan middleware admin
+    Route::middleware('admin')->group(function () {
+        Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+        
+        Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
+        Route::post('/settings', [AdminController::class, 'updateSettings'])->name('settings.update');
+        
+        Route::get('/messages', [AdminController::class, 'messages'])->name('messages');
+        Route::delete('/messages/{id}', [AdminController::class, 'deleteMessage'])->name('messages.delete');
+        
+        Route::get('/projects', [AdminController::class, 'projects'])->name('projects');
+        
+        Route::post('/logout', [AdminController::class, 'logout'])->name('logout');
+    });
 });
