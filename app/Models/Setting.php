@@ -9,32 +9,19 @@ class Setting extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'key',
-        'value',
-        'type',
-    ];
+    protected $fillable = ['key', 'value', 'type'];
 
-
-    /**
-     * *  Mendapatkan nilai dari setting berdasarkan kunci.
-     */
-
-     public static function get($key, $default = null)
-     {
+    public static function get($key, $default = null)
+    {
         $setting = self::where('key', $key)->first();
         return $setting ? $setting->value : $default;
-     }
-
-     /**
-      * * Menyimpan atau upadate setting.
-      */
+    }
 
     public static function set($key, $value, $type = 'text')
     {
         return self::updateOrCreate(
             ['key' => $key],
             ['value' => $value, 'type' => $type]
-    );
+        );
     }
 }
