@@ -17,7 +17,7 @@
                 </div>
             </div>
             <div class="col-lg-6 text-center">
-                <img src="{{ asset('storage/profile.png') }}" alt="Profile" class="img-fluid rounded-circle shadow-lg" style="max-width: 350px;">
+                <img src="{{ asset('storage/images/profile.png') }}" alt="Profile" class="img-fluid rounded-circle shadow-lg" style="max-width: 350px;">
 
 
             </div>
