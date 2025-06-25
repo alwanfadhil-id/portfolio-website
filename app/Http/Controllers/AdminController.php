@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use App\Models\Setting;
 use App\Models\Project;
 use App\Models\Message;
@@ -163,12 +165,139 @@ class AdminController extends Controller
     }
 
     /**
-     * Kelola project
+     * Kelola project - List
      */
     public function projects()
     {
         $projects = Project::latest()->paginate(10);
-        return view('admin.projects', compact('projects'));
+        return view('admin.projects.index', compact('projects'));
+    }
+
+    /**
+     * Form tambah project
+     */
+    public function createProject()
+    {
+        return view('admin.projects.create');
+    }
+
+    /**
+     * Simpan project baru
+     */
+    public function storeProject(Request $request)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'image' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'tech_stack' => 'required|string',
+            'link_demo' => 'nullable|url|max:255',
+            'link_github' => 'nullable|url|max:255',
+        ]);
+
+        // Generate slug
+        $slug = Str::slug($request->title);
+        $originalSlug = $slug;
+        $counter = 1;
+        
+        while (Project::where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $counter;
+            $counter++;
+        }
+
+        // Upload image
+        $imagePath = $request->file('image')->store('projects', 'public');
+
+        // Convert tech_stack dari string ke array
+        $techStack = array_map('trim', explode(',', $request->tech_stack));
+
+        Project::create([
+            'title' => $request->title,
+            'slug' => $slug,
+            'description' => $request->description,
+            'image' => $imagePath,
+            'tech_stack' => $techStack,
+            'link_demo' => $request->link_demo,
+            'link_github' => $request->link_github,
+        ]);
+
+        return redirect()->route('admin.projects')->with('success', 'Proyek berhasil ditambahkan!');
+    }
+
+    /**
+     * Form edit project
+     */
+    public function editProject(Project $project)
+    {
+        return view('admin.projects.edit', compact('project'));
+    }
+
+    /**
+     * Update project
+     */
+    public function updateProject(Request $request, Project $project)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'tech_stack' => 'required|string',
+            'link_demo' => 'nullable|url|max:255',
+            'link_github' => 'nullable|url|max:255',
+        ]);
+
+        // Generate slug jika title berubah
+        $slug = $project->slug;
+        if ($request->title !== $project->title) {
+            $slug = Str::slug($request->title);
+            $originalSlug = $slug;
+            $counter = 1;
+            
+            while (Project::where('slug', $slug)->where('id', '!=', $project->id)->exists()) {
+                $slug = $originalSlug . '-' . $counter;
+                $counter++;
+            }
+        }
+
+        // Handle image upload
+        $imagePath = $project->image;
+        if ($request->hasFile('image')) {
+            // Hapus image lama
+            if ($project->image && Storage::disk('public')->exists($project->image)) {
+                Storage::disk('public')->delete($project->image);
+            }
+            $imagePath = $request->file('image')->store('projects', 'public');
+        }
+
+        // Convert tech_stack dari string ke array
+        $techStack = array_map('trim', explode(',', $request->tech_stack));
+
+        $project->update([
+            'title' => $request->title,
+            'slug' => $slug,
+            'description' => $request->description,
+            'image' => $imagePath,
+            'tech_stack' => $techStack,
+            'link_demo' => $request->link_demo,
+            'link_github' => $request->link_github,
+        ]);
+
+        return redirect()->route('admin.projects')->with('success', 'Proyek berhasil diperbarui!');
+    }
+
+    /**
+     * Hapus project
+     */
+    public function deleteProject(Project $project)
+    {
+        // Hapus image
+        if ($project->image && Storage::disk('public')->exists($project->image)) {
+            Storage::disk('public')->delete($project->image);
+        }
+
+        $project->delete();
+
+        return redirect()->route('admin.projects')->with('success', 'Proyek berhasil dihapus!');
     }
 
     /**
