@@ -7,7 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Project extends Model
 {
+    
     use HasFactory;
+    
+    
 
 
     protected $fillable = [
@@ -25,3 +28,6 @@ class Project extends Model
         'tech_stack' => 'array',
     ];
 }
+
+
+
