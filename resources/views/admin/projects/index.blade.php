@@ -88,7 +88,8 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div class="flex space-x-2">
-                                            <a href="{{ route('projects.show', $project->slug) }}" 
+                                            <!-- Changed from $project->slug to $project (for route model binding) -->
+                                            <a href="{{ route('projects.show', $project) }}" 
                                                class="text-green-600 hover:text-green-900" target="_blank">Lihat</a>
                                             <a href="{{ route('admin.projects.edit', $project->id) }}" 
                                                class="text-blue-600 hover:text-blue-900">Edit</a>
