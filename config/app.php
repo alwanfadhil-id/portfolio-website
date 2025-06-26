@@ -212,4 +212,7 @@ return [
         // 'ExampleClass' => App\Example\ExampleClass::class,
     ])->toArray(),
 
+    // Di config/app.php atau buat middleware
+    'trusted_proxies' => '*',
+
 ];
