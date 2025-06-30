@@ -28,7 +28,7 @@ Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
 // Admin Routes
-Route::prefix('hidden-admin-panel')->name('admin.')->group(function () {
+Route::prefix('admin-panel')->name('admin.')->group(function () {
     
     // Routes yang tidak memerlukan middleware admin (login)
     Route::get('/login', [AdminController::class, 'login'])->name('login');
