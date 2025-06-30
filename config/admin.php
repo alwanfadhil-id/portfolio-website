@@ -15,7 +15,7 @@ return [
     
     // Hash dari password default 'admin123'
     // Untuk keamanan, ganti dengan password yang kuat dan hash-nya
-    'password_hash' => env('ADMIN_PASSWORD_HASH', '$2y$10$G9cO2qjeRfFqUq34Cw0ydO1A2KnY4M2.YhFCDBspZYKk9EsttKSDC'),
+    'password_hash' => env('ADMIN_PASSWORD_HASH', '$2y$10$0pmjvqZNMKi67GVm6Qwq/Ovmvpj3NOdnJVsIo7B1QTT4E9ry.PPM6'),
     
     /*
     |--------------------------------------------------------------------------
