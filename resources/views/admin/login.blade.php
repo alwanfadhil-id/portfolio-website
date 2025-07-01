@@ -10,6 +10,19 @@
     <div class="max-w-md w-full bg-white rounded-lg shadow-md p-6">
         <h2 class="text-2xl font-bold text-center text-gray-800 mb-8">Admin Login</h2>
         
+        <!-- DEBUG INFO - HAPUS SETELAH FIXED -->
+        <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4 text-xs">
+            <strong>Debug Info:</strong><br>
+            Session ID: {{ Session::getId() }}<br>
+            Admin Logged In: {{ Session::get('admin_logged_in') ? 'Yes' : 'No' }}<br>
+            Admin ID: {{ Session::get('admin_id', 'None') }}<br>
+            App Env: {{ app()->environment() }}<br>
+            Session Driver: {{ config('session.driver') }}<br>
+            HTTPS: {{ request()->secure() ? 'Yes' : 'No' }}<br>
+            Domain: {{ request()->getHost() }}<br>
+            URL: {{ request()->url() }}
+        </div>
+        
         @if($errors->any())
             <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
                 @foreach($errors->all() as $error)

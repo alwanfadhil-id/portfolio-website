@@ -24,101 +24,74 @@ class AdminController extends Controller
 
     }
 
-    public function login()
+        public function login()
     {
-        // Clear any existing corrupted session
-        Session::forget(['admin_logged_in', 'admin_id', 'admin_name']);
-        
-        // Jika sudah login dengan session valid, redirect ke dashboard
-        if (Session::has('admin_logged_in') && 
-            Session::get('admin_logged_in') === true && 
-            Session::has('admin_id')) {
-            return redirect()->route('admin.dashboard');
-        }
-        
+        // Don't clear session here, let it be
         return view('admin.login');
     }
 
     public function authenticate(Request $request)
-{
-    $request->validate([
-        'username' => 'required|string',
-        'password' => 'required|string',
-    ]);
+    {
+        $request->validate([
+            'username' => 'required|string',
+            'password' => 'required|string',
+        ]);
 
-    try {
-        if (app()->environment(['local', 'development'])) {
-            Log::info('Login attempt for username: ' . $request->username);
-        }
-        
-        $admin = Admin::where('username', $request->username)->first();
+        try {
+            $admin = Admin::where('username', $request->username)->first();
 
-        if ($admin && Hash::check($request->password, $admin->password)) {
-            // Important: Start session properly for production
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-            $request->session()->regenerate();
-            
-            // Set session data
-            $request->session()->put('admin_logged_in', true);
-            $request->session()->put('admin_id', $admin->id);
-            $request->session()->put('admin_name', $admin->name);
-            
-            // Force save session immediately
-            $request->session()->save();
-            
-            // Debug only in development
-            if (app()->environment(['local', 'development'])) {
-                Log::info('Login successful - Session data:', [
-                    'admin_logged_in' => $request->session()->get('admin_logged_in'),
-                    'admin_id' => $request->session()->get('admin_id'),
-                    'admin_name' => $request->session()->get('admin_name'),
-                    'session_id' => $request->session()->getId()
+            if ($admin && Hash::check($request->password, $admin->password)) {
+                
+                // Simple session setting
+                session([
+                    'admin_logged_in' => true,
+                    'admin_id' => $admin->id,
+                    'admin_name' => $admin->name
                 ]);
+                
+                // Debug log
+                Log::info('Login Success', [
+                    'admin_id' => $admin->id,
+                    'session_check' => session('admin_logged_in'),
+                    'session_id' => session()->getId()
+                ]);
+                
+                return redirect()->route('admin.dashboard')
+                    ->with('success', 'Login berhasil!');
             }
-            
-            // Redirect with success message
-            return redirect()->route('admin.dashboard')
-                ->with('success', 'Login berhasil!');
-        }
 
-        return back()->withErrors([
-            'username' => 'Username atau password salah.',
-        ])->withInput($request->only('username'));
-        
-    } catch (\Exception $e) {
-        Log::error('Login error: ' . $e->getMessage());
-        
-        return back()->withErrors([
-            'username' => 'Terjadi kesalahan saat login.',
-        ])->withInput($request->only('username'));
+            return back()->withErrors([
+                'username' => 'Username atau password salah.',
+            ])->withInput($request->only('username'));
+            
+        } catch (\Exception $e) {
+            Log::error('Login error: ' . $e->getMessage());
+            
+            return back()->withErrors([
+                'username' => 'Terjadi kesalahan: ' . $e->getMessage(),
+            ])->withInput($request->only('username'));
+        }
     }
-}
 
     public function dashboard()
     {
-        // Double check session dengan lebih ketat
-        if (!Session::has('admin_logged_in') || 
-            Session::get('admin_logged_in') !== true || 
-            !Session::has('admin_id')) {
-            Session::flush();
+        // Simple session check
+        if (!session('admin_logged_in') || !session('admin_id')) {
             return redirect()->route('admin.login')
-                ->withErrors(['auth' => 'Session tidak valid, silakan login kembali.']);
+                ->withErrors(['auth' => 'Silakan login terlebih dahulu.']);
         }
 
         try {
-            // Hitung total dengan error handling
             $totalProjects = Project::count() ?? 0;
             $totalMessages = Message::count() ?? 0;
             $recentMessages = Message::latest()->take(5)->get() ?? collect();
 
             return view('admin.dashboard', compact('totalProjects', 'totalMessages', 'recentMessages'));
         } catch (\Exception $e) {
-            // Log error untuk debugging
             Log::error('Dashboard Error: ' . $e->getMessage());
             
             return redirect()->route('admin.login')
-                ->withErrors(['error' => 'Terjadi kesalahan saat memuat dashboard.']);
+                ->withErrors(['error' => 'Terjadi kesalahan: ' . $e->getMessage()]);
         }
     }
 
