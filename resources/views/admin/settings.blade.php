@@ -40,20 +40,19 @@
             <div class="p-6">
                 <form method="POST" action="{{ route('admin.settings.update') }}" enctype="multipart/form-data">
                     @csrf
-                    
+                    @method('PUT')
                     <!-- Basic Info -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div>
-                            <label for="site_title" class="block text-sm font-medium text-gray-700 mb-2">Judul Website</label>
-                            <input type="text" id="site_title" name="site_title" value="{{ $settings['site_title'] }}"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                       <div>
+                         <label for="site_title" class="block text-sm font-medium text-gray-700 mb-2">Judul Website</label>
+                         <input type="text" name="site_title" value="{{ $settings['site_title'] ?? '' }}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
-                        
                         <div>
-                            <label for="contact_email" class="block text-sm font-medium text-gray-700 mb-2">Email Kontak</label>
-                            <input type="email" id="contact_email" name="contact_email" value="{{ $settings['contact_email'] }}"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
+                        <label for="contact_email" class="block text-sm font-medium text-gray-700 mb-2">Email Kontak</label>
+                        <input type="email" name="contact_email" value="{{ $settings['contact_email'] ?? '' }}" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
                     </div>
 
                     <div class="mb-6">
@@ -68,7 +67,7 @@
                             <label for="favicon" class="block text-sm font-medium text-gray-700 mb-2">Favicon (Icon Tab Browser)</label>
                             <input type="file" id="favicon" name="favicon" accept="image/*"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            @if($settings['favicon'])
+                            @if(!empty($settings['favicon']))
                                 <div class="mt-2">
                                     <img src="{{ asset('storage/' . $settings['favicon']) }}" alt="Current Favicon" class="w-8 h-8">
                                     <span class="text-sm text-gray-500">Favicon saat ini</span>
@@ -80,7 +79,7 @@
                             <label for="logo" class="block text-sm font-medium text-gray-700 mb-2">Logo Website</label>
                             <input type="file" id="logo" name="logo" accept="image/*"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            @if($settings['logo'])
+                            @if(!empty($settings['logo']))
                                 <div class="mt-2">
                                     <img src="{{ asset('storage/' . $settings['logo']) }}" alt="Current Logo" class="w-20 h-auto">
                                     <span class="text-sm text-gray-500">Logo saat ini</span>
@@ -93,21 +92,21 @@
                     <div class="mb-6">
                         <label for="about_me" class="block text-sm font-medium text-gray-700 mb-2">Tentang Saya</label>
                         <textarea id="about_me" name="about_me" rows="5"
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">{{ $settings['about_me'] }}</textarea>
+                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">{{ $settings['about_me'] ?? '' }}</textarea>
                     </div>
 
                     <!-- Social Links -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
-                            <label for="github_url" class="block text-sm font-medium text-gray-700 mb-2">URL GitHub</label>
-                            <input type="url" id="github_url" name="github_url" value="{{ $settings['github_url'] }}"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <label for="link_github" class="block text-sm font-medium text-gray-700 mb-2">URL GitHub</label>
+                            <input type="url" id="link_github" name="link_github" value="{{ $settings['link_github'] ?? '' }}"
+                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         
                         <div>
                             <label for="linkedin_url" class="block text-sm font-medium text-gray-700 mb-2">URL LinkedIn</label>
-                            <input type="url" id="linkedin_url" name="linkedin_url" value="{{ $settings['linkedin_url'] }}"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="url" id="linkedin_url" name="linkedin_url" value="{{ $settings['linkedin_url'] ?? '' }}"
+                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                     </div>
 

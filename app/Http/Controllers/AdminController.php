@@ -2,316 +2,316 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Admin;
+use App\Models\Setting;
+use App\Models\Contact;
+use App\Models\Message;
+use App\Models\Project;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use App\Models\Setting;
-use App\Models\Project;
-use App\Models\Message;
+
+
+
 
 class AdminController extends Controller
 {
-    /**
-     * Halaman Login admin
-     */
+    public function __construct()
+    {
+        // Tambahkan middleware untuk semua method kecuali login dan authenticate
+        $this->middleware('admin')->except(['login', 'authenticate']);
+    }
+
     public function login()
     {
-        // Redirect jika sudah login
-        if (Session::get('admin_logged_in')) {
+        // Jika sudah login, redirect ke dashboard
+        if (Session::has('admin_logged_in')) {
             return redirect()->route('admin.dashboard');
         }
         
         return view('admin.login');
     }
 
-    /**
-     * Proses login admin dengan rate limiting
-     */
     public function authenticate(Request $request)
     {
         $request->validate([
-            'username' => 'required|string|max:50',
-            'password' => 'required|string|min:4',
+            'username' => 'required|string',
+            'password' => 'required|string',
         ]);
 
-        $key = 'admin_login_attempts:' . $request->ip();
-        
-        // Rate limiting - maksimal 5 percobaan per 15 menit
-        if (RateLimiter::tooManyAttempts($key, 5)) {
-            $seconds = RateLimiter::availableIn($key);
-            return back()->withErrors([
-                'username' => "Terlalu banyak percobaan login. Coba lagi dalam {$seconds} detik.",
-            ]);
-        }
+        // Cari admin berdasarkan username
+        $admin = Admin::where('username', $request->username)->first();
 
-        // Ambil kredensial dari environment atau config
-        $adminUsername = config('admin.username', 'admin');
-        $adminPassword = config('admin.password_hash', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'); // bcrypt dari 'password'
-
-        // Verifikasi login
-        if ($request->username === $adminUsername && Hash::check($request->password, $adminPassword)) {
-            // Reset rate limiter jika berhasil
-            RateLimiter::clear($key);
+        // Verifikasi admin dan password
+        if ($admin && Hash::check($request->password, $admin->password)) {
+            // Set session untuk login
+            Session::put('admin_logged_in', true);
+            Session::put('admin_id', $admin->id);
+            Session::put('admin_name', $admin->name);
             
-            // Set session
-            Session::put([
-                'admin_logged_in' => true,
-                'admin_last_activity' => now(),
-                'admin_login_time' => now(),
-                'admin_ip' => $request->ip(),
-            ]);
-
             return redirect()->route('admin.dashboard')->with('success', 'Login berhasil!');
         }
-
-        // Increment attempts jika gagal
-        RateLimiter::hit($key, 900); // 15 menit
 
         return back()->withErrors([
             'username' => 'Username atau password salah.',
         ])->withInput($request->only('username'));
     }
 
-    /**
-     * Halaman Dashboard admin
-     */
     public function dashboard()
     {
-        $totalProjects = Project::count();
-        $totalMessages = Message::count();
-        $recentMessages = Message::latest()->take(5)->get();
+        try {
+            // Cek apakah admin sudah login
+            if (!Session::has('admin_logged_in')) {
+                return redirect()->route('admin.login');
+            }
 
-        return view('admin.dashboard', compact('totalProjects', 'totalMessages', 'recentMessages'));
+            // Hitung total dengan error handling
+            $totalProjects = Project::count() ?? 0;
+            $totalMessages = Message::count() ?? 0;
+            $recentMessages = Message::latest()->take(5)->get() ?? collect();
+
+            return view('admin.dashboard', compact('totalProjects', 'totalMessages', 'recentMessages'));
+        } catch (\Exception $e) {
+            // Log error untuk debugging
+            Log::error('Dashboard Error: ' . $e->getMessage());
+            
+            return redirect()->route('admin.login')
+                ->withErrors(['error' => 'Terjadi kesalahan saat memuat dashboard.']);
+        }
     }
 
-    /**
-     * Halaman Pengaturan
-     */
-    public function settings()
-    {
-        $settings = [
-            'site_title' => Setting::get('site_title', 'My Portfolio'),
-            'site_description' => Setting::get('site_description', 'This is my portfolio website.'),
-            'favicon' => Setting::get('favicon'),
-            'logo' => Setting::get('logo'),
-            'about_me' => Setting::get('about_me', 'Tell something about yourself'),
-            'contact_email' => Setting::get('contact_email', 'your@email.com'),
-            'github_url' => Setting::get('github_url'),
-            'linkedin_url' => Setting::get('linkedin_url'),
-        ];
-        
-        return view('admin.settings', compact('settings'));
-    }
-
-    /**
-     * Proses update pengaturan
-     */
-    public function updateSettings(Request $request)
-    {
-        $request->validate([
-            'site_title' => 'required|string|max:100',
-            'site_description' => 'required|string|max:500',
-            'contact_email' => 'required|email|max:100',
-            'about_me' => 'required|string|max:2000',
-            'github_url' => 'nullable|url|max:255',
-            'linkedin_url' => 'nullable|url|max:255',
-            'favicon' => 'nullable|image|mimes:ico,png|max:512', // 512KB max
-            'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg|max:2048', // 2MB max
-        ]);
-
-        $settings = $request->except(['_token', 'favicon', 'logo']);
-
-        // Simpan setting text
-        foreach ($settings as $key => $value) {
-            Setting::set($key, $value);
-        }
-
-        // Handle upload favicon
-        if ($request->hasFile('favicon')) {
-            $faviconPath = $request->file('favicon')->store('uploads', 'public');
-            Setting::set('favicon', $faviconPath, 'image');
-        }
-
-        // Handle upload logo
-        if ($request->hasFile('logo')) {
-            $logoPath = $request->file('logo')->store('uploads', 'public');
-            Setting::set('logo', $logoPath, 'image');
-        }
-
-        return back()->with('success', 'Pengaturan berhasil disimpan!');
-    }
-
-    /**
-     * Kelola pesan
-     */
     public function messages()
     {
-        $messages = Message::latest()->paginate(10);
+        // Cek session admin
+        if (!Session::has('admin_logged_in')) {
+            return redirect()->route('admin.login');
+        }
+
+        $messages = Message::latest()->paginate(20);
         return view('admin.messages', compact('messages'));
     }
 
-    /**
-     * Hapus pesan
-     */
     public function deleteMessage($id)
     {
+        // Cek session admin
+        if (!Session::has('admin_logged_in')) {
+            return redirect()->route('admin.login');
+        }
+
         $message = Message::findOrFail($id);
         $message->delete();
-        
-        return back()->with('success', 'Pesan berhasil dihapus');
+
+        return redirect()->route('admin.messages')->with('success', 'Pesan berhasil dihapus!');
     }
 
-    /**
-     * Kelola project - List
-     */
+
+
+public function settings()
+{
+    if (!Session::has('admin_logged_in')) {
+        return redirect()->route('admin.login');
+    }
+
+    $admin = Admin::find(Session::get('admin_id'));
+
+    // Ambil semua setting dalam format [key => value]
+    $settings = Setting::pluck('value', 'key')->toArray();
+
+    return view('admin.settings', compact('admin', 'settings'));
+}
+
+
+   public function updateSettings(Request $request)
+{
+    if (!Session::has('admin_logged_in')) {
+        return redirect()->route('admin.login');
+    }
+
+    $admin = Admin::find(Session::get('admin_id'));
+
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'username' => 'required|string|max:255|unique:admins,username,' . $admin->id,
+        'email' => 'required|email|max:255|unique:admins,email,' . $admin->id,
+        'current_password' => 'nullable|string',
+        'new_password' => 'nullable|string|min:8|confirmed',
+        'site_title' => 'nullable|string|max:255',
+        'contact_email' => 'nullable|email|max:255',
+        'site_description' => 'nullable|string',
+        'about_me' => 'nullable|string',
+        'link_github' => 'nullable|url',
+        'linkedin_url' => 'nullable|url',
+        'favicon' => 'nullable|image|mimes:jpeg,png,jpg,gif,ico|max:2048',
+        'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+    ]);
+
+    // Update admin info
+    $admin->name = $request->name;
+    $admin->username = $request->username;
+    $admin->email = $request->email;
+
+    if ($request->filled('new_password')) {
+        if ($request->filled('current_password')) {
+            if (!Hash::check($request->current_password, $admin->password)) {
+                return back()->withErrors(['current_password' => 'Password lama tidak benar.']);
+            }
+        }
+        $admin->password = Hash::make($request->new_password);
+    }
+
+    $admin->save();
+    Session::put('admin_name', $admin->name);
+
+    // Handle file uploads
+    if ($request->hasFile('favicon')) {
+        $faviconPath = $request->file('favicon')->store('settings', 'public');
+        Setting::set('favicon', $faviconPath);
+    }
+
+    if ($request->hasFile('logo')) {
+        $logoPath = $request->file('logo')->store('settings', 'public');
+        Setting::set('logo', $logoPath);
+    }
+
+    // Update all settings
+    $settingsToUpdate = [
+        'site_title', 'contact_email', 'site_description', 'about_me',
+        'link_github', 'linkedin_url'
+    ];
+
+    foreach ($settingsToUpdate as $setting) {
+        Setting::set($setting, $request->$setting ?? '');
+    }
+
+    return redirect()->route('admin.settings')->with('success', 'Pengaturan berhasil diperbarui!');
+}
+
     public function projects()
     {
-        $projects = Project::latest()->paginate(10);
-        return view('admin.projects.index', compact('projects'));
+        // Cek session admin
+        if (!Session::has('admin_logged_in')) {
+            return redirect()->route('admin.login');
+        }
+
+        $projects = Project::latest()->paginate(20);
+        return view('admin.projects', compact('projects'));
     }
 
-    /**
-     * Form tambah project
-     */
     public function createProject()
     {
+        // Cek session admin
+        if (!Session::has('admin_logged_in')) {
+            return redirect()->route('admin.login');
+        }
+
         return view('admin.projects.create');
     }
 
-    /**
-     * Simpan project baru
-     */
     public function storeProject(Request $request)
     {
+        // Cek session admin
+        if (!Session::has('admin_logged_in')) {
+            return redirect()->route('admin.login');
+        }
+
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'image' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'tech_stack' => 'required|string',
-            'link_demo' => 'nullable|url|max:255',
-            'link_github' => 'nullable|url|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'tech_stack' => 'nullable|string',
+            'link_demo' => 'nullable|url',
+            'link_github' => 'nullable|url',
+            
         ]);
 
-        // Generate slug
-        $slug = Str::slug($request->title);
-        $originalSlug = $slug;
-        $counter = 1;
-        
-        while (Project::where('slug', $slug)->exists()) {
-            $slug = $originalSlug . '-' . $counter;
-            $counter++;
+        $project = new Project();
+        $project->title = $request->title;
+        $project->description = $request->description;
+        $project->tech_stack = $request->tech_stack;
+        $project->link_demo = $request->link_demo;
+        $project->link_github = $request->link_github;
+        $project->slug = Str::slug($request->title);
+
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('projects', 'public');
+            $project->image = $imagePath;
         }
 
-        // Upload image
-        $imagePath = $request->file('image')->store('projects', 'public');
-
-        // Convert tech_stack dari string ke array
-        $techStack = array_map('trim', explode(',', $request->tech_stack));
-
-        Project::create([
-            'title' => $request->title,
-            'slug' => $slug,
-            'description' => $request->description,
-            'image' => $imagePath,
-            'tech_stack' => $techStack,
-            'link_demo' => $request->link_demo,
-            'link_github' => $request->link_github,
-        ]);
+        $project->save();
 
         return redirect()->route('admin.projects')->with('success', 'Proyek berhasil ditambahkan!');
     }
 
-    /**
-     * Form edit project
-     */
     public function editProject(Project $project)
     {
+        // Cek session admin
+        if (!Session::has('admin_logged_in')) {
+            return redirect()->route('admin.login');
+        }
+
         return view('admin.projects.edit', compact('project'));
     }
 
-    /**
-     * Update project
-     */
     public function updateProject(Request $request, Project $project)
     {
+        // Cek session admin
+        if (!Session::has('admin_logged_in')) {
+            return redirect()->route('admin.login');
+        }
+
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'tech_stack' => 'required|string',
-            'link_demo' => 'nullable|url|max:255',
-            'link_github' => 'nullable|url|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'tech_stack' => 'nullable|string',
+            'link_demo' => 'nullable|url',
+            'link_github' => 'nullable|url',
         ]);
 
-        // Generate slug jika title berubah
-        $slug = $project->slug;
-        if ($request->title !== $project->title) {
-            $slug = Str::slug($request->title);
-            $originalSlug = $slug;
-            $counter = 1;
-            
-            while (Project::where('slug', $slug)->where('id', '!=', $project->id)->exists()) {
-                $slug = $originalSlug . '-' . $counter;
-                $counter++;
-            }
-        }
+        $project->title = $request->title;
+        $project->description = $request->description;
+        $project->tech_stack = $request->tech_stack;
+        $project->link_demo = $request->link_demo;
+        $project->link_github = $request->link_github;
 
-        // Handle image upload
-        $imagePath = $project->image;
         if ($request->hasFile('image')) {
-            // Hapus image lama
-            if ($project->image && Storage::disk('public')->exists($project->image)) {
-                Storage::disk('public')->delete($project->image);
+            // Hapus gambar lama jika ada
+            if ($project->image && file_exists(storage_path('app/public/' . $project->image))) {
+                unlink(storage_path('app/public/' . $project->image));
             }
+            
             $imagePath = $request->file('image')->store('projects', 'public');
+            $project->image = $imagePath;
         }
 
-        // Convert tech_stack dari string ke array
-        $techStack = array_map('trim', explode(',', $request->tech_stack));
-
-        $project->update([
-            'title' => $request->title,
-            'slug' => $slug,
-            'description' => $request->description,
-            'image' => $imagePath,
-            'tech_stack' => $techStack,
-            'link_demo' => $request->link_demo,
-            'link_github' => $request->link_github,
-        ]);
+        $project->save();
 
         return redirect()->route('admin.projects')->with('success', 'Proyek berhasil diperbarui!');
     }
 
-    /**
-     * Hapus project
-     */
     public function deleteProject(Project $project)
     {
-        // Hapus image
-        if ($project->image && Storage::disk('public')->exists($project->image)) {
-            Storage::disk('public')->delete($project->image);
+        // Cek session admin
+        if (!Session::has('admin_logged_in')) {
+            return redirect()->route('admin.login');
         }
 
+        // Hapus gambar jika ada
+        if ($project->image && file_exists(storage_path('app/public/' . $project->image))) {
+            unlink(storage_path('app/public/' . $project->image));
+        }
+        
         $project->delete();
 
         return redirect()->route('admin.projects')->with('success', 'Proyek berhasil dihapus!');
     }
 
-    /**
-     * Logout admin
-     */
     public function logout()
     {
-        Session::forget([
-            'admin_logged_in',
-            'admin_last_activity',
-            'admin_login_time',
-            'admin_ip'
-        ]);
-        
-        return redirect()->route('admin.login')->with('success', 'Logout berhasil');
+        Session::flush();
+        return redirect()->route('admin.login')->with('success', 'Logout berhasil!');
     }
 }

@@ -27,6 +27,15 @@ class Project extends Model
     protected $casts = [
         'tech_stack' => 'array',
     ];
+    // Accessor untuk handle data legacy
+    public function getTechStackAttribute($value)
+    {
+    if (is_array($value)) return $value;
+    if (is_string($value)) {
+        return json_decode($value, true) ?? explode(',', $value);
+    }
+    return [];
+}
 }
 
 

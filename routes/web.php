@@ -6,6 +6,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\Route;
 
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -28,32 +29,39 @@ Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
 // Admin Routes
-Route::prefix('admin-panel')->name('admin.')->group(function () {
+Route::prefix('admin')->group(function () {
+      Route::get('/', function () {
+        // Cek apakah sudah login sebagai admin
+        if (auth()->guard('admin')->check()) {
+            return redirect()->route('admin.dashboard');
+        }
+        return redirect()->route('admin.login');
+    });
+     Route::get('/login', [AdminController::class, 'login'])->name('admin.login');
+    Route::post('/authenticate', [AdminController::class, 'authenticate'])->name('admin.authenticate');
+    Route::get('/login', [AdminController::class, 'login'])->name('admin.login');
+    Route::post('/authenticate', [AdminController::class, 'authenticate'])->name('admin.authenticate');
     
-    // Routes yang tidak memerlukan middleware admin (login)
-    Route::get('/login', [AdminController::class, 'login'])->name('login');
-    Route::post('/login', [AdminController::class, 'authenticate'])->name('authenticate');
     
-    // Routes yang memerlukan middleware admin
-    Route::middleware('admin')->group(function () {
-        Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+// Routes yang memerlukan middleware admin
+Route::middleware('admin')->group(function () {
         
-        Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
-        Route::post('/settings', [AdminController::class, 'updateSettings'])->name('settings.update');
+
         
-        Route::get('/messages', [AdminController::class, 'messages'])->name('messages');
-        Route::delete('/messages/{id}', [AdminController::class, 'deleteMessage'])->name('messages.delete');
-        
-        Route::get('/projects', [AdminController::class, 'projects'])->name('projects');
-        
-        Route::post('/logout', [AdminController::class, 'logout'])->name('logout');
+        Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+        Route::get('/messages', [AdminController::class, 'messages'])->name('admin.messages');
+        Route::get('/projects', [AdminController::class, 'projects'])->name('admin.projects');
+        Route::get('/settings', [AdminController::class, 'settings'])->name('admin.settings');
+        Route::post('/logout', [AdminController::class, 'logout'])->name('admin.logout');
 
         // Custom Proyek Routes
-        Route::get('/projects/create', [AdminController::class, 'createProject'])->name('projects.create');
-        Route::post('/projects', [AdminController::class, 'storeProject'])->name('projects.store');
-        Route::get('/projects/{project}/edit', [AdminController::class, 'editProject'])->name('projects.edit');
-        Route::put('/projects/{project}', [AdminController::class, 'updateProject'])->name('projects.update');
-        Route::delete('/projects/{project}', [AdminController::class, 'deleteProject'])->name('projects.delete');
+        Route::get('/projects/create', [AdminController::class, 'createProject'])->name('admin.projects.create');
+        Route::post('/projects', [AdminController::class, 'storeProject'])->name('admin.projects.store');
+        Route::get('/projects/{project}/edit', [AdminController::class, 'editProject'])->name('admin.projects.edit');
+        Route::put('/projects/{project}', [AdminController::class, 'updateProject'])->name('admin.projects.update');
+        Route::put('/settings', [AdminController::class, 'updateSettings'])->name('admin.settings.update');
+        Route::delete('/projects/{project}', [AdminController::class, 'deleteProject'])->name('admin.projects.delete');
+        Route::delete('/message}', [AdminController::class, 'deleteMessages'])->name('admin.messages.delete');
 
     });
 });

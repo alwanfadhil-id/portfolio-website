@@ -72,13 +72,16 @@
                         </div>
                     </div>
 
-                    <div class="mb-6">
-                        <label for="tech_stack" class="block text-sm font-medium text-gray-700 mb-2">Tech Stack *</label>
-                        <input type="text" id="tech_stack" name="tech_stack" value="{{ old('tech_stack') }}" required
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('tech_stack') border-red-500 @enderror"
-                               placeholder="Laravel, Vue.js, MySQL, Tailwind CSS">
-                        <p class="text-sm text-gray-500 mt-1">Pisahkan dengan koma (,) untuk setiap teknologi</p>
-                    </div>
+<div class="mb-3">
+    <label class="form-label">Tech Stack</label>
+    <select name="tech_stack[]" multiple class="form-select">
+        @foreach(['Laravel', 'React', 'Tailwind CSS'] as $tech)
+            <option value="{{ $tech }}" {{ in_array($tech, old('tech_stack', $project->tech_stack ?? [])) ? 'selected' : '' }}>
+                {{ $tech }}
+            </option>
+        @endforeach
+    </select>
+</div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>

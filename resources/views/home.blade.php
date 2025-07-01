@@ -18,8 +18,6 @@
             </div>
             <div class="col-lg-6 text-center">
                 <img src="{{ asset('storage/profile.png') }}" alt="Profile" class="img-fluid rounded-circle shadow-lg" style="max-width: 350px;">
-
-
             </div>
         </div>
     </div>
@@ -89,9 +87,13 @@
                         <h5 class="card-title">{{ $project->title }}</h5>
                         <p class="card-text flex-grow-1">{{ Str::limit($project->description, 100) }}</p>
                         <div class="mb-3">
-                            @foreach($project->tech_stack as $tech)
-                                <span class="tech-badge">{{ $tech }}</span>
-                            @endforeach
+                            @if(is_array($project->tech_stack) || is_object($project->tech_stack))
+                                @foreach((array)$project->tech_stack as $tech)
+                                    <span class="tech-badge">{{ $tech }}</span>
+                                @endforeach
+                            @else
+                                <span class="tech-badge">{{ $project->tech_stack }}</span>
+                            @endif
                         </div>
                         <div class="d-flex gap-2">
                             @if($project->link_demo)
