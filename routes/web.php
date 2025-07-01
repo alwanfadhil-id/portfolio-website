@@ -43,8 +43,8 @@ Route::prefix('admin')->group(function () {
 
 
     // Login (khusus tamu)
-    Route::get('/login', [AdminController::class, 'login'])->name('admin.login');
-    Route::post('/authenticate', [AdminController::class, 'authenticate'])->name('admin.authenticate');
+    Route::get('/admin/login', [AdminController::class, 'showLoginForm'])->name('admin.login');
+    Route::post('/admin/login', [AdminController::class, 'login'])->name('admin.login.submit'); 
 
     // Group dengan middleware admin
     Route::middleware('admin')->group(function () {
