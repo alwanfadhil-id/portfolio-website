@@ -40,43 +40,60 @@ class AdminController extends Controller
     }
 
     public function authenticate(Request $request)
-    {
-        $request->validate([
-            'username' => 'required|string',
-            'password' => 'required|string',
-        ]);
+{
+    $request->validate([
+        'username' => 'required|string',
+        'password' => 'required|string',
+    ]);
 
-        try {
-            $admin = Admin::where('username', $request->username)->first();
-
-            if ($admin && Hash::check($request->password, $admin->password)) {
-                // Clear semua session sebelumnya
-                Session::flush();
-                
-                // Set session baru
-                Session::put('admin_logged_in', true);
-                Session::put('admin_id', $admin->id);
-                Session::put('admin_name', $admin->name);
-                
-                // Regenerate session ID untuk keamanan
-                Session::regenerate();
-                
-                Log::info('Login successful for admin: '.$admin->id);
-                return redirect()->route('admin.dashboard')->with('success', 'Login berhasil!');
-            }
-
-            Log::warning('Failed login attempt for username: '.$request->username);
-            return back()->withErrors([
-                'username' => 'Username atau password salah.',
-            ])->withInput($request->only('username'));
-            
-        } catch (\Exception $e) {
-            Log::error('Login error: ' . $e->getMessage());
-            return back()->withErrors([
-                'username' => 'Terjadi kesalahan saat login.',
-            ])->withInput($request->only('username'));
+    try {
+        if (app()->environment(['local', 'development'])) {
+            Log::info('Login attempt for username: ' . $request->username);
         }
+        
+        $admin = Admin::where('username', $request->username)->first();
+
+        if ($admin && Hash::check($request->password, $admin->password)) {
+            // Important: Start session properly for production
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            $request->session()->regenerate();
+            
+            // Set session data
+            $request->session()->put('admin_logged_in', true);
+            $request->session()->put('admin_id', $admin->id);
+            $request->session()->put('admin_name', $admin->name);
+            
+            // Force save session immediately
+            $request->session()->save();
+            
+            // Debug only in development
+            if (app()->environment(['local', 'development'])) {
+                Log::info('Login successful - Session data:', [
+                    'admin_logged_in' => $request->session()->get('admin_logged_in'),
+                    'admin_id' => $request->session()->get('admin_id'),
+                    'admin_name' => $request->session()->get('admin_name'),
+                    'session_id' => $request->session()->getId()
+                ]);
+            }
+            
+            // Redirect with success message
+            return redirect()->route('admin.dashboard')
+                ->with('success', 'Login berhasil!');
+        }
+
+        return back()->withErrors([
+            'username' => 'Username atau password salah.',
+        ])->withInput($request->only('username'));
+        
+    } catch (\Exception $e) {
+        Log::error('Login error: ' . $e->getMessage());
+        
+        return back()->withErrors([
+            'username' => 'Terjadi kesalahan saat login.',
+        ])->withInput($request->only('username'));
     }
+}
 
     public function dashboard()
     {
