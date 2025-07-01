@@ -21,14 +21,13 @@ class AdminController extends Controller
 {
     public function __construct()
     {
-        // Tambahkan middleware untuk semua method kecuali login dan authenticate
-        $this->middleware('admin')->except(['login', 'authenticate']);
+
     }
 
     public function login()
     {
         // Jika sudah login, redirect ke dashboard
-        if (Session::has('admin_logged_in')) {
+        if (Session::has('admin_logged_in') && Session::get('admin_logged_in')) {
             return redirect()->route('admin.dashboard');
         }
         

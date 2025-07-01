@@ -5,6 +5,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Session;
 
 
 /*
@@ -32,12 +33,14 @@ Route::post('/contact', [ContactController::class, 'store'])->name('contact.stor
 Route::prefix('admin')->group(function () {
 
     // Route root admin untuk redirect login/dashboard
-    Route::get('/', function () {
-        if (auth()->check()) {
+     Route::get('/', function () {
+        // Gunakan session yang sama dengan middleware
+        if (Session::has('admin_logged_in') && Session::get('admin_logged_in')) {
             return redirect()->route('admin.dashboard');
         }
         return redirect()->route('admin.login');
-    });
+    })->name('admin.root');
+
 
     // Login (khusus tamu)
     Route::get('/login', [AdminController::class, 'login'])->name('admin.login');
