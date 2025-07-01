@@ -26,8 +26,13 @@ class AdminController extends Controller
 
     public function login()
     {
-        // Jika sudah login, redirect ke dashboard
-        if (Session::has('admin_logged_in') && Session::get('admin_logged_in')) {
+        // Clear any existing corrupted session
+        Session::forget(['admin_logged_in', 'admin_id', 'admin_name']);
+        
+        // Jika sudah login dengan session valid, redirect ke dashboard
+        if (Session::has('admin_logged_in') && 
+            Session::get('admin_logged_in') === true && 
+            Session::has('admin_id')) {
             return redirect()->route('admin.dashboard');
         }
         
@@ -35,37 +40,56 @@ class AdminController extends Controller
     }
 
     public function authenticate(Request $request)
-{
-    $request->validate([
-        'username' => 'required|string',
-        'password' => 'required|string',
-    ]);
+    {
+        $request->validate([
+            'username' => 'required|string',
+            'password' => 'required|string',
+        ]);
 
-    $admin = Admin::where('username', $request->username)->first();
+        try {
+            $admin = Admin::where('username', $request->username)->first();
 
-    if ($admin && Hash::check($request->password, $admin->password)) {
-        Session::put('admin_logged_in', true);
-        Session::put('admin_id', $admin->id);
-        Session::put('admin_name', $admin->name);
-        
-        Log::info('Login successful for admin: '.$admin->id);
-        return redirect()->route('admin.dashboard')->with('success', 'Login berhasil!');
+            if ($admin && Hash::check($request->password, $admin->password)) {
+                // Clear semua session sebelumnya
+                Session::flush();
+                
+                // Set session baru
+                Session::put('admin_logged_in', true);
+                Session::put('admin_id', $admin->id);
+                Session::put('admin_name', $admin->name);
+                
+                // Regenerate session ID untuk keamanan
+                Session::regenerate();
+                
+                Log::info('Login successful for admin: '.$admin->id);
+                return redirect()->route('admin.dashboard')->with('success', 'Login berhasil!');
+            }
+
+            Log::warning('Failed login attempt for username: '.$request->username);
+            return back()->withErrors([
+                'username' => 'Username atau password salah.',
+            ])->withInput($request->only('username'));
+            
+        } catch (\Exception $e) {
+            Log::error('Login error: ' . $e->getMessage());
+            return back()->withErrors([
+                'username' => 'Terjadi kesalahan saat login.',
+            ])->withInput($request->only('username'));
+        }
     }
-
-    Log::warning('Failed login attempt for username: '.$request->username);
-    return back()->withErrors([
-        'username' => 'Username atau password salah.',
-    ])->withInput($request->only('username'));
-}
 
     public function dashboard()
     {
-        try {
-            // Cek apakah admin sudah login
-            if (!Session::has('admin_logged_in')) {
-                return redirect()->route('admin.login');
-            }
+        // Double check session dengan lebih ketat
+        if (!Session::has('admin_logged_in') || 
+            Session::get('admin_logged_in') !== true || 
+            !Session::has('admin_id')) {
+            Session::flush();
+            return redirect()->route('admin.login')
+                ->withErrors(['auth' => 'Session tidak valid, silakan login kembali.']);
+        }
 
+        try {
             // Hitung total dengan error handling
             $totalProjects = Project::count() ?? 0;
             $totalMessages = Message::count() ?? 0;

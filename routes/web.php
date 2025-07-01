@@ -11,11 +11,6 @@ use Illuminate\Support\Facades\Session;
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
 */
 
 // Public Routes
@@ -30,17 +25,20 @@ Route::post('/contact', [ContactController::class, 'store'])->name('contact.stor
 
 // Admin Routes
 Route::prefix('admin')->group(function () {
+    // Login Routes (HARUS di luar middleware)
+    Route::get('/login', [AdminController::class, 'login'])->name('admin.login');
+    Route::post('/login', [AdminController::class, 'authenticate'])->name('admin.login.submit');
+    
     // Route root admin untuk redirect login/dashboard
     Route::get('/', function () {
-        if (Session::has('admin_logged_in') && Session::get('admin_logged_in')) {
+        // Cek session dengan lebih ketat
+        if (Session::has('admin_logged_in') && 
+            Session::get('admin_logged_in') === true && 
+            Session::has('admin_id')) {
             return redirect()->route('admin.dashboard');
         }
         return redirect()->route('admin.login');
     })->name('admin.root');
-
-    // Login Routes (outside middleware)
-    Route::get('/login', [AdminController::class, 'login'])->name('admin.login');
-    Route::post('/login', [AdminController::class, 'authenticate'])->name('admin.login.submit');
 
     // Protected Admin Routes (require admin session)
     Route::middleware('admin')->group(function () {
