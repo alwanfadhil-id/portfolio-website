@@ -35,29 +35,28 @@ class AdminController extends Controller
     }
 
     public function authenticate(Request $request)
-    {
-        $request->validate([
-            'username' => 'required|string',
-            'password' => 'required|string',
-        ]);
+{
+    $request->validate([
+        'username' => 'required|string',
+        'password' => 'required|string',
+    ]);
 
-        // Cari admin berdasarkan username
-        $admin = Admin::where('username', $request->username)->first();
+    $admin = Admin::where('username', $request->username)->first();
 
-        // Verifikasi admin dan password
-        if ($admin && Hash::check($request->password, $admin->password)) {
-            // Set session untuk login
-            Session::put('admin_logged_in', true);
-            Session::put('admin_id', $admin->id);
-            Session::put('admin_name', $admin->name);
-            
-            return redirect()->route('admin.dashboard')->with('success', 'Login berhasil!');
-        }
-
-        return back()->withErrors([
-            'username' => 'Username atau password salah.',
-        ])->withInput($request->only('username'));
+    if ($admin && Hash::check($request->password, $admin->password)) {
+        Session::put('admin_logged_in', true);
+        Session::put('admin_id', $admin->id);
+        Session::put('admin_name', $admin->name);
+        
+        Log::info('Login successful for admin: '.$admin->id);
+        return redirect()->route('admin.dashboard')->with('success', 'Login berhasil!');
     }
+
+    Log::warning('Failed login attempt for username: '.$request->username);
+    return back()->withErrors([
+        'username' => 'Username atau password salah.',
+    ])->withInput($request->only('username'));
+}
 
     public function dashboard()
     {
