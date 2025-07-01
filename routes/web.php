@@ -28,40 +28,35 @@ Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('pro
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
-// Admin Routes
+// Admin Routes tanpa middleware
 Route::prefix('admin')->group(function () {
-      Route::get('/', function () {
-        // Cek apakah sudah login sebagai admin
-        if (auth()->guard('admin')->check()) {
+
+    // Route root admin untuk redirect login/dashboard
+    Route::get('/', function () {
+        if (auth()->check()) {
             return redirect()->route('admin.dashboard');
         }
         return redirect()->route('admin.login');
     });
-     Route::get('/login', [AdminController::class, 'login'])->name('admin.login');
-    Route::post('/authenticate', [AdminController::class, 'authenticate'])->name('admin.authenticate');
+
+    // Login (khusus tamu)
     Route::get('/login', [AdminController::class, 'login'])->name('admin.login');
     Route::post('/authenticate', [AdminController::class, 'authenticate'])->name('admin.authenticate');
-    
-    
-// Routes yang memerlukan middleware admin
-Route::middleware('admin')->group(function () {
-        
 
-        
+    // Group dengan middleware admin
+    Route::middleware('admin')->group(function () {
         Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
         Route::get('/messages', [AdminController::class, 'messages'])->name('admin.messages');
         Route::get('/projects', [AdminController::class, 'projects'])->name('admin.projects');
         Route::get('/settings', [AdminController::class, 'settings'])->name('admin.settings');
         Route::post('/logout', [AdminController::class, 'logout'])->name('admin.logout');
 
-        // Custom Proyek Routes
         Route::get('/projects/create', [AdminController::class, 'createProject'])->name('admin.projects.create');
         Route::post('/projects', [AdminController::class, 'storeProject'])->name('admin.projects.store');
         Route::get('/projects/{project}/edit', [AdminController::class, 'editProject'])->name('admin.projects.edit');
         Route::put('/projects/{project}', [AdminController::class, 'updateProject'])->name('admin.projects.update');
         Route::put('/settings', [AdminController::class, 'updateSettings'])->name('admin.settings.update');
         Route::delete('/projects/{project}', [AdminController::class, 'deleteProject'])->name('admin.projects.delete');
-        Route::delete('/message}', [AdminController::class, 'deleteMessages'])->name('admin.messages.delete');
-
+        Route::delete('/message', [AdminController::class, 'deleteMessages'])->name('admin.messages.delete');
     });
 });
