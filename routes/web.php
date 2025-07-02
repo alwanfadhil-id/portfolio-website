@@ -6,6 +6,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\RateLimiter;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,6 +23,11 @@ Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('pro
 
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+
+// Rate limiting untuk form submissions
+Route::middleware(['throttle:contact'])->group(function () {
+    Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+});
 
 // Admin Routes
 Route::prefix('admin')->group(function () {
