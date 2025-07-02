@@ -3,7 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Portfolio Website')</title>
+    <!-- Meta tags SEO -->
+    <meta name="description" content="@yield('meta_description', 'Portfolio website Alwan Fadhil - Web Developer & Software Engineer')">
+    <meta name="keywords" content="@yield('meta_keywords', 'web developer, software engineer, laravel, php')">
+    <meta name="author" content="Alwan Fadhil">
+    <!-- Open Graph tags -->
+    <meta property="og:title" content="@yield('title', 'Portfolio Website')">
+    <meta property="og:description" content="@yield('meta_description')">
+    <meta property="og:image" content="@yield('meta_image', asset('images/default-og.jpg'))">
+    <meta property="og:url" content="{{ request()->url() }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>

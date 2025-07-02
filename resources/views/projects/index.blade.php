@@ -24,7 +24,12 @@
             <div class="col-lg-4 col-md-6 mb-4">
                 <div class="card project-card h-100">
                     @if($project->image)
-                        <img src="{{ asset('storage/' . $project->image) }}" class="card-img-top" alt="{{ $project->title }}" style="height: 200px; object-fit: cover;">
+                        <img src="{{ asset('storage/' . $project->image) }}" 
+                            class="card-img-top lazy"
+                            loading="lazy"
+                            alt="{{ $project->title }}"
+                            width="400"
+                            height="300">
                     @else
                         <img src="https://via.placeholder.com/400x200/667eea/ffffff?text={{ urlencode($project->title) }}" class="card-img-top" alt="{{ $project->title }}">
                     @endif
