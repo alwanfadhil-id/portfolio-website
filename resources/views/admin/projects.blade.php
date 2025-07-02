@@ -262,10 +262,13 @@
 
     <script>
         function toggleView(view) {
-            const gridView = document.getElementById('grid-view');
+             const gridView = document.getElementById('grid-view');
             const tableView = document.getElementById('table-view');
             const gridBtn = document.getElementById('grid-btn');
             const tableBtn = document.getElementById('table-btn');
+
+            // Hindari error jika elemen tidak ada (misal tidak ada proyek)
+            if (!gridView || !tableView || !gridBtn || !tableBtn) return;
 
             if (view === 'grid') {
                 gridView.classList.remove('hidden');
