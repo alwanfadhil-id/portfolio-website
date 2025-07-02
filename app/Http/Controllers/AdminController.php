@@ -121,84 +121,93 @@ class AdminController extends Controller
 
 
 
-public function settings()
-{
-    if (!Session::has('admin_logged_in')) {
-        return redirect()->route('admin.login');
-    }
-
-    $admin = Admin::find(Session::get('admin_id'));
-
-    // Ambil semua setting dalam format [key => value]
-    $settings = Setting::pluck('value', 'key')->toArray();
-
-    return view('admin.settings', compact('admin', 'settings'));
-}
-
-
-   public function updateSettings(Request $request)
-{
-    if (!Session::has('admin_logged_in')) {
-        return redirect()->route('admin.login');
-    }
-
-    $admin = Admin::find(Session::get('admin_id'));
-
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'username' => 'required|string|max:255|unique:admins,username,' . $admin->id,
-        'email' => 'required|email|max:255|unique:admins,email,' . $admin->id,
-        'current_password' => 'nullable|string',
-        'new_password' => 'nullable|string|min:8|confirmed',
-        'site_title' => 'nullable|string|max:255',
-        'contact_email' => 'nullable|email|max:255',
-        'site_description' => 'nullable|string',
-        'about_me' => 'nullable|string',
-        'link_github' => 'nullable|url',
-        'linkedin_url' => 'nullable|url',
-        'favicon' => 'nullable|image|mimes:jpeg,png,jpg,gif,ico|max:2048',
-        'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-    ]);
-
-    // Update admin info
-    $admin->name = $request->name;
-    $admin->username = $request->username;
-    $admin->email = $request->email;
-
-    if ($request->filled('new_password')) {
-        if ($request->filled('current_password')) {
-            if (!Hash::check($request->current_password, $admin->password)) {
-                return back()->withErrors(['current_password' => 'Password lama tidak benar.']);
-            }
+    public function settings()
+    {
+        if (!Session::has('admin_logged_in')) {
+            return redirect()->route('admin.login');
         }
-        $admin->password = Hash::make($request->new_password);
+
+        try {
+            // Ambil semua setting dalam format [key => value]
+            $settings = Setting::pluck('value', 'key')->toArray();
+            
+            return view('admin.settings', compact('settings'));
+        } catch (\Exception $e) {
+            Log::error('Settings Error: ' . $e->getMessage());
+            return redirect()->route('admin.dashboard')
+                ->withErrors(['error' => 'Gagal memuat pengaturan: ' . $e->getMessage()]);
+        }
     }
 
-    $admin->save();
-    Session::put('admin_name', $admin->name);
-
-    // Handle file uploads
-    if ($request->hasFile('favicon')) {
-        $faviconPath = $request->file('favicon')->store('settings', 'public');
-        Setting::set('favicon', $faviconPath);
+    public function updateSettings(Request $request)
+{
+    if (!Session::has('admin_logged_in')) {
+        return redirect()->route('admin.login');
     }
 
-    if ($request->hasFile('logo')) {
-        $logoPath = $request->file('logo')->store('settings', 'public');
-        Setting::set('logo', $logoPath);
+    try {
+        // Validasi
+        $request->validate([
+            'site_title' => 'nullable|string|max:255',
+            'contact_email' => 'nullable|email|max:255',
+            'site_description' => 'nullable|string|max:1000',
+            'about_me' => 'nullable|string|max:2000',
+            'link_github' => 'nullable|url|max:255',
+            'linkedin_url' => 'nullable|url|max:255',
+            'favicon' => 'nullable|image|mimes:jpeg,png,jpg,gif,ico|max:2048',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        // Handle file uploads dengan type
+        if ($request->hasFile('favicon')) {
+            // Hapus favicon lama jika ada
+            $oldFavicon = Setting::get('favicon');
+            if ($oldFavicon && file_exists(storage_path('app/public/' . $oldFavicon))) {
+                unlink(storage_path('app/public/' . $oldFavicon));
+            }
+            
+            $faviconPath = $request->file('favicon')->store('settings', 'public');
+            Setting::set('favicon', $faviconPath, 'image');
+        }
+
+        if ($request->hasFile('logo')) {
+            // Hapus logo lama jika ada
+            $oldLogo = Setting::get('logo');
+            if ($oldLogo && file_exists(storage_path('app/public/' . $oldLogo))) {
+                unlink(storage_path('app/public/' . $oldLogo));
+            }
+            
+            $logoPath = $request->file('logo')->store('settings', 'public');
+            Setting::set('logo', $logoPath, 'image');
+        }
+
+        // Update settings dengan type yang sesuai
+        $settingsMap = [
+            'site_title' => 'text',
+            'contact_email' => 'email', 
+            'site_description' => 'textarea',
+            'about_me' => 'textarea',
+            'link_github' => 'url',
+            'linkedin_url' => 'url'
+        ];
+
+        foreach ($settingsMap as $key => $type) {
+            Setting::set($key, $request->input($key, ''), $type);
+        }
+
+        return redirect()->route('admin.settings')
+            ->with('success', 'Pengaturan website berhasil diperbarui!');
+            
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return redirect()->route('admin.settings')
+            ->withErrors($e->errors())
+            ->withInput();
+    } catch (\Exception $e) {
+        Log::error('Update Settings Error: ' . $e->getMessage());
+        return redirect()->route('admin.settings')
+            ->withErrors(['error' => 'Gagal memperbarui pengaturan: ' . $e->getMessage()])
+            ->withInput();
     }
-
-    // Update all settings
-    $settingsToUpdate = [
-        'site_title', 'contact_email', 'site_description', 'about_me',
-        'link_github', 'linkedin_url'
-    ];
-
-    foreach ($settingsToUpdate as $setting) {
-        Setting::set($setting, $request->$setting ?? '');
-    }
-
-    return redirect()->route('admin.settings')->with('success', 'Pengaturan berhasil diperbarui!');
 }
 
     public function projects()

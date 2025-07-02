@@ -267,7 +267,7 @@
             const gridBtn = document.getElementById('grid-btn');
             const tableBtn = document.getElementById('table-btn');
 
-            // Hindari error jika elemen tidak ada (misal tidak ada proyek)
+            // Hindari error jika elemen tidak ada (bila tidak ada proyek)
             if (!gridView || !tableView || !gridBtn || !tableBtn) return;
 
             if (view === 'grid') {
