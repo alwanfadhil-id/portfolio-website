@@ -233,7 +233,7 @@ public function settings()
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'tech_stack' => 'nullable|string',
+            'tech_stack' => 'nullable|array',
             'link_demo' => 'nullable|url',
             'link_github' => 'nullable|url',
             
@@ -278,7 +278,7 @@ public function settings()
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'tech_stack' => 'nullable|string',
+            'tech_stack' => 'nullable|array',
             'link_demo' => 'nullable|url',
             'link_github' => 'nullable|url',
         ]);
