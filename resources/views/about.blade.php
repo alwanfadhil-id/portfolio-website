@@ -12,7 +12,7 @@
                 <p class="lead">Get to know more about my journey and passion in web development</p>
             </div>
             <div class="col-lg-6 text-center">
-                <img src="{{ asset('storage/About.png') }}" alt="About" class="img-fluid rounded shadow-lg">
+                <img src="{{ asset('public/storage/About.png') }}" alt="About" class="img-fluid rounded shadow-lg">
             </div>
         </div>
     </div>
