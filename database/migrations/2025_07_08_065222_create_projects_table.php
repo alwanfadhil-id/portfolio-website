@@ -11,8 +11,10 @@ return new class extends Migration
         Schema::create('projects', function (Blueprint $table) {
             $table->id();
             $table->string('title');
+            $table->string('slug')->unique();
             $table->text('description');
-            $table->json('tech_stack'); // atau text jika ingin menyimpan sebagai string
+            $table->json('tech_stack');
+            $table->string('image')->nullable();
             $table->string('link_demo')->nullable();
             $table->string('link_github')->nullable();
             $table->timestamps();

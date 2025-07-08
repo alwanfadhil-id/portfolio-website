@@ -29,6 +29,12 @@ Route::middleware(['throttle:contact'])->group(function () {
     Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 });
 
+// Project routes
+Route::resource('projects', ProjectController::class);
+
+// Generate slug route
+Route::post('/projects/generate-slug', [ProjectController::class, 'generateSlug'])->name('projects.generate-slug');
+
 // Admin Routes
 Route::prefix('admin')->group(function () {
     // Login Routes (HARUS di luar middleware)

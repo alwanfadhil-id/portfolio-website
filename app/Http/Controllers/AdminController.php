@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Helpers\ImageOptimizer;
 
 
 
@@ -247,25 +248,28 @@ class AdminController extends Controller
             'link_github' => 'nullable|url',
             
         ]);
-
-        $project = new Project();
-        $project->title = $request->title;
-        $project->description = $request->description;
-        $project->tech_stack = $request->tech_stack;
-        $project->link_demo = $request->link_demo;
-        $project->link_github = $request->link_github;
-        $project->slug = Str::slug($request->title);
-
+       $imageUrl = null;
+        
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('projects', 'public');
-            $project->image = $imagePath;
+            try {
+                $imageUrl = ImageOptimizer::uploadImage($request->file('image'), 'projects');
+            } catch (\Exception $e) {
+                return back()->withErrors(['image' => 'Failed to upload image: ' . $e->getMessage()]);
+            }
         }
 
-        $project->save();
+        $project = Project::create([
+            'title' => $request->title,
+            'slug' => Str::slug($request->title),
+            'description' => $request->description,
+            'image' => $imageUrl,
+            'tech_stack' => $request->tech_stack ?? [],
+            'link_demo' => $request->link_demo,
+            'link_github' => $request->link_github,
+        ]);
 
-        return redirect()->route('admin.projects')->with('success', 'Proyek berhasil ditambahkan!');
+        return redirect()->route('admin.projects')->with('success', 'Project berhasil ditambahkan!');
     }
-
     public function editProject(Project $project)
     {
         // Cek session admin
@@ -292,27 +296,28 @@ class AdminController extends Controller
             'link_github' => 'nullable|url',
         ]);
 
-        $project->title = $request->title;
-        $project->description = $request->description;
-        $project->tech_stack = $request->tech_stack;
-        $project->link_demo = $request->link_demo;
-        $project->link_github = $request->link_github;
-
+         $imageUrl = $project->image;
+        
         if ($request->hasFile('image')) {
-            // Hapus gambar lama jika ada
-            if ($project->image && file_exists(storage_path('app/public/' . $project->image))) {
-                unlink(storage_path('app/public/' . $project->image));
+            try {
+                $imageUrl = ImageOptimizer::uploadImage($request->file('image'), 'projects');
+            } catch (\Exception $e) {
+                return back()->withErrors(['image' => 'Failed to upload image: ' . $e->getMessage()]);
             }
-            
-            $imagePath = $request->file('image')->store('projects', 'public');
-            $project->image = $imagePath;
         }
 
-        $project->save();
+        $project->update([
+            'title' => $request->title,
+            'slug' => Str::slug($request->title),
+            'description' => $request->description,
+            'image' => $imageUrl,
+            'tech_stack' => $request->tech_stack ?? [],
+            'link_demo' => $request->link_demo,
+            'link_github' => $request->link_github,
+        ]);
 
-        return redirect()->route('admin.projects')->with('success', 'Proyek berhasil diperbarui!');
+        return redirect()->route('admin.projects')->with('success', 'Project berhasil diperbarui!');
     }
-
     public function deleteProject(Project $project)
     {
         // Cek session admin

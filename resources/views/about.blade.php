@@ -12,7 +12,11 @@
                 <p class="lead">Get to know more about my journey and passion in web development</p>
             </div>
             <div class="col-lg-6 text-center">
-                <img src="{{ asset('public/storage/About.png') }}" alt="About" class="img-fluid rounded shadow-lg">
+                <img src="https://res.cloudinary.com/dl0b7duqc/image/upload/v1751960899/About_q3afdm.webp" 
+                        alt="About" 
+                        class="img-fluid rounded-circle shadow-lg" 
+                        style="max-width: 350px; width: 100%;"
+                        loading="lazy">
             </div>
         </div>
     </div>
