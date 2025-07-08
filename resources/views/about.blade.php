@@ -12,7 +12,7 @@
                 <p class="lead">Get to know more about my journey and passion in web development</p>
             </div>
             <div class="col-lg-6 text-center">
-                <img src="https://via.placeholder.com/400x400/667eea/ffffff?text=About+Me" alt="About" class="img-fluid rounded shadow-lg">
+                <img src="{{ asset('storage/About.png') }}" alt="About" class="img-fluid rounded shadow-lg">
             </div>
         </div>
     </div>
@@ -30,12 +30,12 @@
                             Hello! I'm a passionate web developer with a love for creating digital experiences that make a difference.
                         </p>
                         <p class="mb-4">
-                            Saya memulai perjalanan programming sejak [tahun], dan sejak itu saya telah mengembangkan berbagai aplikasi web 
+                            Saya memulai perjalanan programming sejak 2021, dan sejak itu saya telah mengembangkan berbagai aplikasi web 
                             menggunakan teknologi modern seperti Laravel, React, dan Vue.js. Saya percaya bahwa teknologi dapat membantu 
                             memecahkan masalah sehari-hari dan membuat hidup lebih mudah.
                         </p>
                         <p class="mb-4">
-                            Ketika tidak sedang coding, saya suka [hobi/aktivitas], membaca tentang teknologi terbaru, dan berkontribusi 
+                            Ketika tidak sedang coding, saya suka membaca tentang teknologi terbaru, dan berkontribusi 
                             pada proyek open source. Saya juga aktif dalam komunitas developer lokal dan senang berbagi pengetahuan 
                             dengan sesama developer.
                         </p>
@@ -59,18 +59,18 @@
                 <div class="timeline">
                     <div class="card mb-3 border-start border-primary border-4">
                         <div class="card-body">
-                            <h5 class="card-title">Sarjana Teknik Informatika</h5>
-                            <h6 class="card-subtitle mb-2 text-muted">Universitas [Nama] • 2020-2024</h6>
+                            <h5 class="card-title">Sarjana Teknik Komputer</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">Universitas Indonesia •2024</h6>
                             <p class="card-text">
                                 Fokus pada pengembangan web dan mobile application. 
-                                IPK: 3.8/4.0
+                                Mengambil berbagai mata kuliah terkait software engineering, database, dan jaringan komputer.
                             </p>
                         </div>
                     </div>
                     <div class="card mb-3 border-start border-success border-4">
                         <div class="card-body">
-                            <h5 class="card-title">SMA Negeri [Nomor]</h5>
-                            <h6 class="card-subtitle mb-2 text-muted">Jurusan IPA • 2017-2020</h6>
+                            <h5 class="card-title">SMA Negeri 1 Luhak Nan Duo</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">Jurusan IPA • 2017</h6>
                             <p class="card-text">
                                 Fokus pada matematika dan sains, mulai belajar programming dasar.
                             </p>
@@ -93,8 +93,8 @@
                     </div>
                     <div class="card mb-3 border-start border-info border-4">
                         <div class="card-body">
-                            <h5 class="card-title">Intern Backend Developer</h5>
-                            <h6 class="card-subtitle mb-2 text-muted">PT. [Nama Perusahaan] • 2023</h6>
+                            <h5 class="card-title">Backend Developer</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">RSUD Pasaman Barat • Present</h6>
                             <p class="card-text">
                                 Membantu pengembangan API menggunakan Laravel dan optimasi database MySQL.
                             </p>

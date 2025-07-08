@@ -81,7 +81,7 @@
                                     <i class="fas fa-envelope fa-2x"></i>
                                 </div>
                                 <h6 class="fw-bold">Email</h6>
-                                <p class="text-muted mb-0">your.email@example.com</p>
+                                <p class="text-muted mb-0">alwanfadhil.id@gmail.com</p>
                             </div>
                         </div>
                     </div>
@@ -92,7 +92,7 @@
                                     <i class="fas fa-phone fa-2x"></i>
                                 </div>
                                 <h6 class="fw-bold">Phone</h6>
-                                <p class="text-muted mb-0">+62 812-3456-7890</p>
+                                <p class="text-muted mb-0">+62 822-8858-3033</p>
                             </div>
                         </div>
                     </div>
@@ -103,7 +103,7 @@
                                     <i class="fas fa-map-marker-alt fa-2x"></i>
                                 </div>
                                 <h6 class="fw-bold">Location</h6>
-                                <p class="text-muted mb-0">Pekanbaru, Riau</p>
+                                <p class="text-muted mb-0">Pasaman Barat, Sumatera Barat</p>
                             </div>
                         </div>
                     </div>
@@ -118,16 +118,16 @@
                     </div>
                     <div class="card-body">
                         <div class="d-grid gap-2">
-                            <a href="#" class="btn btn-outline-dark">
+                            <a href="https://github.com/alwanfadhil-id" class="btn btn-outline-dark">
                                 <i class="fab fa-github"></i> GitHub
                             </a>
-                            <a href="#" class="btn btn-outline-primary">
+                            <a href="https://www.linkedin.com/in/alwan-fadhil/" class="btn btn-outline-primary">
                                 <i class="fab fa-linkedin"></i> LinkedIn
                             </a>
                             <a href="#" class="btn btn-outline-info">
                                 <i class="fab fa-twitter"></i> Twitter
                             </a>
-                            <a href="#" class="btn btn-outline-danger">
+                            <a href="https://www.instagram.com/alwan_fadhil/" class="btn btn-outline-danger">
                                 <i class="fab fa-instagram"></i> Instagram
                             </a>
                         </div>
@@ -176,8 +176,7 @@
                             </li>
                             <li class="mb-2">
                                 <i class="fas fa-check text-success me-2"></i>
-                                Technical Consultation
-                            </li>
+                                Frontend Development (React, Vue.js)
                         </ul>
                     </div>
                 </div>
@@ -221,32 +220,6 @@
     </div>
 </section>
 
-<!-- Map Section (Optional) -->
-<section class="py-5 bg-light">
-    <div class="container">
-        <div class="row">
-            <div class="col-12 text-center mb-4">
-                <h3 class="fw-bold">My Location</h3>
-                <p class="text-muted">Based in Pekanbaru, Riau, Indonesia</p>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-12">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body p-0">
-                        <!-- Placeholder for map - you can integrate Google Maps or other mapping service -->
-                        <div class="bg-light text-center py-5">
-                            <i class="fas fa-map-marked-alt fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">Interactive Map</h5>
-                            <p class="text-muted">Google Maps integration can be added here</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
 <!-- Call to Action -->
 <section class="py-5" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
     <div class="container">
@@ -255,10 +228,10 @@
                 <h3 class="fw-bold mb-4">Ready to Start Your Project?</h3>
                 <p class="lead mb-4">Let's turn your ideas into reality. Get in touch today!</p>
                 <div class="d-flex gap-3 justify-content-center">
-                    <a href="mailto:your.email@example.com" class="btn btn-light btn-lg">
+                    <a href="mailto:alwanfadhil.id@gmail.com" class="btn btn-light btn-lg">
                         <i class="fas fa-envelope"></i> Email Me
                     </a>
-                    <a href="tel:+6281234567890" class="btn btn-outline-light btn-lg">
+                    <a href="tel:+6282288583033" class="btn btn-outline-light btn-lg">
                         <i class="fas fa-phone"></i> Call Me
                     </a>
                 </div>

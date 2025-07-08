@@ -44,7 +44,7 @@
                 <div class="card h-100 text-center p-4 project-card">
                     <i class="fas fa-server fa-3x text-primary mb-3"></i>
                     <h5>Backend</h5>
-                    <p class="text-muted">PHP, Laravel, Node.js, Python</p>
+                    <p class="text-muted">PHP, Laravel, Node.js</p>
                 </div>
             </div>
             <div class="col-md-3 col-sm-6 mb-4">
