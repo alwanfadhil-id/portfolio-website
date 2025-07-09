@@ -51,22 +51,29 @@
                     @csrf
                     @method('PUT')
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div class="md:col-span-2">
-                            <label for="title" class="block text-sm font-medium text-gray-700 mb-2">Judul Proyek *</label>
-                            <input type="text" id="title" name="title" value="{{ old('title', $project->title) }}" required
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('title') border-red-500 @enderror"
-                                   placeholder="Masukkan judul proyek">
-                        </div>
+                    <!-- Title -->
+                    <div class="mb-6">
+                        <label for="title" class="block text-sm font-medium text-gray-700 mb-2">Judul Proyek *</label>
+                        <input type="text" id="title" name="title" value="{{ old('title', $project->title) }}" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('title') border-red-500 @enderror"
+                               placeholder="Masukkan judul proyek">
+                        @error('title')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
+                    <!-- Description -->
                     <div class="mb-6">
                         <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Deskripsi Proyek *</label>
                         <textarea id="description" name="description" rows="5" required
                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('description') border-red-500 @enderror"
                                   placeholder="Deskripsikan proyek Anda secara detail...">{{ old('description', $project->description) }}</textarea>
+                        @error('description')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
+                    <!-- Image Upload -->
                     <div class="mb-6">
                         <label for="image" class="block text-sm font-medium text-gray-700 mb-2">Gambar Proyek</label>
                         
@@ -77,12 +84,22 @@
                                 <img src="{{ asset('storage/' . $project->image) }}" 
                                      alt="{{ $project->title }}" 
                                      class="w-32 h-32 object-cover rounded-lg border">
+                                <div class="mt-2">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" id="remove_image" name="remove_image" class="mr-2">
+                                        <span class="text-sm text-gray-600">Hapus gambar saat ini</span>
+                                    </label>
+                                </div>
                             </div>
                         @endif
                         
                         <input type="file" id="image" name="image" accept="image/*"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('image') border-red-500 @enderror">
                         <p class="text-sm text-gray-500 mt-1">Format: JPG, JPEG, PNG, WEBP. Maksimal: 2MB. Kosongkan jika tidak ingin mengubah gambar.</p>
+                        
+                        @error('image')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                         
                         <!-- Preview new image -->
                         <div id="imagePreview" class="mt-3 hidden">
@@ -91,21 +108,29 @@
                         </div>
                     </div>
 
+                    <!-- Tech Stack -->
                     <div class="mb-6">
-                        <label for="tech_stack" class="block text-sm font-medium text-gray-700 mb-2">Tech Stack *</label>
-                        <input type="text" id="tech_stack" name="tech_stack" 
-                               value="{{ old('tech_stack', is_array($project->tech_stack) ? implode(', ', $project->tech_stack) : $project->tech_stack) }}" required
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('tech_stack') border-red-500 @enderror"
-                               placeholder="Laravel, Vue.js, MySQL, Tailwind CSS">
-                        <p class="text-sm text-gray-500 mt-1">Pisahkan dengan koma (,) untuk setiap teknologi</p>
+                        <label for="tech_stack_input" class="block text-sm font-medium text-gray-700 mb-2">Tech Stack *</label>
+                        <input type="text" id="tech_stack_input" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="Ketik teknologi dan tekan Enter">
+                        <div id="tech_stack_container" class="mt-2"></div>
+                        <p class="text-sm text-gray-500 mt-1">Tekan Enter untuk menambahkan teknologi baru</p>
+                        @error('tech_stack')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
+                    <!-- Demo and GitHub Links -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
                             <label for="link_demo" class="block text-sm font-medium text-gray-700 mb-2">Link Demo</label>
                             <input type="url" id="link_demo" name="link_demo" value="{{ old('link_demo', $project->link_demo) }}"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('link_demo') border-red-500 @enderror"
                                    placeholder="https://demo.example.com">
+                            @error('link_demo')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
                         </div>
                         
                         <div>
@@ -113,7 +138,37 @@
                             <input type="url" id="link_github" name="link_github" value="{{ old('link_github', $project->link_github) }}"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('link_github') border-red-500 @enderror"
                                    placeholder="https://github.com/username/repository">
+                            @error('link_github')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
                         </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="mb-6">
+                        <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status *</label>
+                        <select id="status" name="status" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('status') border-red-500 @enderror">
+                            <option value="draft" {{ old('status', $project->status ?? 'draft') === 'draft' ? 'selected' : '' }}>
+                                Draft
+                            </option>
+                            <option value="published" {{ old('status', $project->status ?? '') === 'published' ? 'selected' : '' }}>
+                                Published
+                            </option>
+                        </select>
+                        @error('status')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Featured -->
+                    <div class="mb-6">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="featured" name="featured" value="1" 
+                                   {{ old('featured', $project->featured ?? false) ? 'checked' : '' }}
+                                   class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <span class="text-sm font-medium text-gray-700">Proyek Unggulan</span>
+                        </label>
                     </div>
 
                     <!-- Project Info -->
@@ -132,6 +187,7 @@
                         </div>
                     </div>
 
+                    <!-- Action Buttons -->
                     <div class="flex justify-end space-x-4">
                         <a href="{{ route('admin.projects') }}" 
                            class="bg-gray-500 text-white py-2 px-6 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 transition duration-200">
@@ -177,33 +233,89 @@
     </div>
 
     <script>
-        // Preview image sebelum upload
-        document.getElementById('image').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('previewImg').src = e.target.result;
-                    document.getElementById('imagePreview').classList.remove('hidden');
-                };
-                reader.readAsDataURL(file);
-            } else {
-                document.getElementById('imagePreview').classList.add('hidden');
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tech Stack Management
+            const techStackInput = document.getElementById('tech_stack_input');
+            const techStackContainer = document.getElementById('tech_stack_container');
+            
+            // Initialize tech stack from existing project data
+            let techStack = [];
+            @if($project->tech_stack)
+                techStack = @json(is_array($project->tech_stack) ? $project->tech_stack : explode(',', $project->tech_stack));
+            @endif
+            
+            // Clean up tech stack array
+            techStack = techStack.map(tech => tech.trim()).filter(tech => tech !== '');
+
+            // Render existing tech stack
+            renderTechStack();
+
+            // Add tech on Enter key
+            techStackInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const tech = this.value.trim();
+                    if (tech && !techStack.includes(tech)) {
+                        techStack.push(tech);
+                        renderTechStack();
+                        this.value = '';
+                    }
+                }
+            });
+
+            function renderTechStack() {
+                techStackContainer.innerHTML = '';
+                techStack.forEach((tech, index) => {
+                    const badge = document.createElement('span');
+                    badge.className = 'inline-flex items-center px-2 py-1 mr-1 mb-1 text-xs font-medium text-white bg-blue-600 rounded-full';
+                    badge.innerHTML = `
+                        ${tech}
+                        <button type="button" class="ml-1 text-white hover:text-gray-200" onclick="removeTech(${index})">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                            </svg>
+                        </button>
+                        <input type="hidden" name="tech_stack[]" value="${tech}">
+                    `;
+                    techStackContainer.appendChild(badge);
+                });
             }
-        });
 
-        // Auto format tech stack
-        document.getElementById('tech_stack').addEventListener('blur', function(e) {
-            let value = e.target.value;
-            // Hapus spasi ekstra dan format ulang
-            let formatted = value.split(',').map(item => item.trim()).filter(item => item !== '').join(', ');
-            e.target.value = formatted;
-        });
+            // Make removeTech function global
+            window.removeTech = function(index) {
+                techStack.splice(index, 1);
+                renderTechStack();
+            };
 
-        // Auto-resize textarea
-        document.getElementById('description').addEventListener('input', function(e) {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
+            // Image preview functionality
+            const imageInput = document.getElementById('image');
+            const imagePreview = document.getElementById('imagePreview');
+            const previewImg = document.getElementById('previewImg');
+
+            imageInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImg.src = e.target.result;
+                        imagePreview.classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    imagePreview.classList.add('hidden');
+                }
+            });
+
+            // Auto-resize textarea
+            const descriptionTextarea = document.getElementById('description');
+            descriptionTextarea.addEventListener('input', function(e) {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+
+            // Initialize textarea height
+            descriptionTextarea.style.height = 'auto';
+            descriptionTextarea.style.height = (descriptionTextarea.scrollHeight) + 'px';
         });
     </script>
 </body>

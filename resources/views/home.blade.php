@@ -88,10 +88,8 @@
                 <div class="project-card loading">
                     <div class="position-relative overflow-hidden">
                         @if($project->image)
-                            <img src="{{ $project->getOptimizedImageAttribute(400, 200) }}" 
-                                 class="card-img-top" 
-                                 alt="{{ $project->title }}" 
-                                 loading="lazy">
+                            <img src="{{ \App\Helpers\ImageOptimizer::getOptimizedImageUrl($project->image, 400, 200) }}">
+
                         @else
                             <img src="https://via.placeholder.com/400x200/667eea/ffffff?text={{ urlencode($project->title) }}" 
                                  class="card-img-top" 

@@ -2,180 +2,231 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Project;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use Illuminate\Http\Request;
+use App\Helpers\CloudinaryHelper;
 use Illuminate\Support\Str;
 
 class ProjectController extends Controller
 {
+    protected $cloudinary;
+
+    public function __construct(CloudinaryHelper $cloudinary)
+    {
+        $this->cloudinary = $cloudinary;
+    }
+
+    /**
+     * Display a listing of projects
+     */
     public function index()
     {
-        $projects = Project::latest()->paginate(9);
+        $projects = Project::published()
+            ->latest()
+            ->paginate(9);
+
         return view('projects.index', compact('projects'));
     }
 
-    public function show(Project $project)
-    {
-        return view('projects.show', compact('project'));
-    }
-
+    /**
+     * Show the form for creating a new project
+     */
     public function create()
     {
         return view('projects.create');
     }
 
+    /**
+     * Store a newly created project
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:projects,slug',
             'description' => 'required|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'tech_stack' => 'required|array',
+            'tech_stack.*' => 'string|max:50',
             'link_demo' => 'nullable|url',
             'link_github' => 'nullable|url',
+            'status' => 'required|in:draft,published',
+            'featured' => 'boolean'
         ]);
 
-        $imagePath = null;
+        $projectData = $validated;
         
+        // Auto-generate slug from title
+        $projectData['slug'] = $this->generateUniqueSlug($validated['title']);
+        
+        // Handle image upload
         if ($request->hasFile('image')) {
-            try {
-                // Upload ke Cloudinary
-                $uploadResult = Cloudinary::upload($request->file('image')->getRealPath(), [
-                    'folder' => 'portfolio/projects',
-                    'transformation' => [
-                        'width' => 800,
-                        'height' => 600,
-                        'crop' => 'limit',
-                        'quality' => 'auto',
-                        'format' => 'auto'
-                    ]
-                ]);
-                
-                $imagePath = $uploadResult->getSecurePath();
-            } catch (\Exception $e) {
-                return back()->withErrors(['image' => 'Gagal upload gambar: ' . $e->getMessage()]);
+            $uploadResult = $this->cloudinary->uploadImage(
+                $request->file('image'),
+                'projects'
+            );
+
+            if ($uploadResult['success']) {
+                $projectData['image_public_id'] = $uploadResult['public_id'];
+                $projectData['image'] = $uploadResult['url'];
+            } else {
+                return back()->with('error', 'Failed to upload image: ' . $uploadResult['message']);
             }
         }
 
-        Project::create([
-            'title' => $validated['title'],
-            'slug' => $validated['slug'],
-            'description' => $validated['description'],
-            'tech_stack' => $validated['tech_stack'],
-            'image' => $imagePath,
-            'link_demo' => $validated['link_demo'],
-            'link_github' => $validated['link_github'],
-        ]);
+        $project = Project::create($projectData);
 
-        return redirect()->route('projects.index')
-            ->with('success', 'Project berhasil ditambahkan!');
+        return redirect()->route('projects.show', $project)
+            ->with('success', 'Project created successfully!');
     }
 
+    /**
+     * Display the specified project
+     */
+    public function show(Project $project)
+    {
+        // Get related projects (same tech stack or recent)
+        $relatedProjects = Project::published()
+            ->where('id', '!=', $project->id)
+            ->where(function ($query) use ($project) {
+                if ($project->tech_stack) {
+                    foreach ($project->tech_stack as $tech) {
+                        $query->orWhereJsonContains('tech_stack', $tech);
+                    }
+                }
+            })
+            ->latest()
+            ->take(3)
+            ->get();
+
+        // If no related projects found, get latest projects
+        if ($relatedProjects->count() < 3) {
+            $relatedProjects = Project::published()
+                ->where('id', '!=', $project->id)
+                ->latest()
+                ->take(3)
+                ->get();
+        }
+
+        return view('projects.show', compact('project', 'relatedProjects'));
+    }
+
+    /**
+     * Show the form for editing the specified project
+     */
     public function edit(Project $project)
     {
         return view('projects.edit', compact('project'));
     }
-    
+
+    /**
+     * Update the specified project
+     */
     public function update(Request $request, Project $project)
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:projects,slug,' . $project->id,
             'description' => 'required|string',
-            'tech_stack' => 'required|array',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'tech_stack' => 'required|array',
+            'tech_stack.*' => 'string|max:50',
             'link_demo' => 'nullable|url',
             'link_github' => 'nullable|url',
+            'status' => 'required|in:draft,published',
+            'featured' => 'boolean'
         ]);
 
-        $imagePath = $project->image;
-        
-        if ($request->hasFile('image')) {
-            try {
-                // Hapus gambar lama jika ada
-                if ($project->image) {
-                    $publicId = $this->extractPublicId($project->image);
-                    if ($publicId) {
-                        Cloudinary::destroy($publicId);
-                    }
-                }
-                
-                // Upload gambar baru
-                $uploadResult = Cloudinary::upload($request->file('image')->getRealPath(), [
-                    'folder' => 'portfolio/projects',
-                    'transformation' => [
-                        'width' => 800,
-                        'height' => 600,
-                        'crop' => 'limit',
-                        'quality' => 'auto',
-                        'format' => 'auto'
-                    ]
-                ]);
-                
-                $imagePath = $uploadResult->getSecurePath();
-            } catch (\Exception $e) {
-                return back()->withErrors(['image' => 'Gagal upload gambar: ' . $e->getMessage()]);
-            }
+        $projectData = $validated;
+
+        // Update slug if title changed
+        if ($validated['title'] !== $project->title) {
+            $projectData['slug'] = $this->generateUniqueSlug($validated['title'], $project->id);
         }
 
-        $project->update([
-            'title' => $validated['title'],
-            'slug' => $validated['slug'],
-            'description' => $validated['description'],
-            'tech_stack' => $validated['tech_stack'],
-            'image' => $imagePath,
-            'link_demo' => $validated['link_demo'],
-            'link_github' => $validated['link_github'],
-        ]);
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            // Delete old image if exists
+            if ($project->image_public_id) {
+                $this->cloudinary->deleteImage($project->image_public_id);
+            }
 
-        return redirect()->route('projects.index')
-            ->with('success', 'Project berhasil diupdate!');
+            $uploadResult = $this->cloudinary->uploadImage(
+                $request->file('image'),
+                'projects'
+            );
+
+            if ($uploadResult['success']) {
+                $projectData['image_public_id'] = $uploadResult['public_id'];
+                $projectData['image'] = $uploadResult['url'];
+            } else {
+                return back()->with('error', 'Failed to upload image: ' . $uploadResult['message']);
+            }
+        } elseif ($request->has('remove_image')) {
+            // Remove image if requested
+            if ($project->image_public_id) {
+                $this->cloudinary->deleteImage($project->image_public_id);
+            }
+            $projectData['image_public_id'] = null;
+            $projectData['image'] = null;
+        }
+
+        $project->update($projectData);
+
+        return redirect()->route('projects.show', $project)
+            ->with('success', 'Project updated successfully!');
     }
 
+    /**
+     * Remove the specified project
+     */
     public function destroy(Project $project)
     {
-        try {
-            // Hapus gambar dari Cloudinary jika ada
-            if ($project->image) {
-                $publicId = $this->extractPublicId($project->image);
-                if ($publicId) {
-                    Cloudinary::destroy($publicId);
-                }
-            }
-            
-            $project->delete();
-            
-            return redirect()->route('projects.index')
-                ->with('success', 'Project berhasil dihapus!');
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Gagal menghapus project: ' . $e->getMessage()]);
+        // Delete image from Cloudinary
+        if ($project->image_public_id) {
+            $this->cloudinary->deleteImage($project->image_public_id);
         }
-    }
-    
-    private function extractPublicId($cloudinaryUrl)
-    {
-        // Extract public_id dari URL Cloudinary
-        // Contoh URL: https://res.cloudinary.com/demo/image/upload/v1234567890/portfolio/projects/sample.jpg
-        preg_match('/\/v\d+\/(.+)\.[^.]+$/', $cloudinaryUrl, $matches);
-        return $matches[1] ?? null;
+
+        $project->delete();
+
+        return redirect()->route('projects.index')
+            ->with('success', 'Project deleted successfully!');
     }
 
-    // Method untuk auto-generate slug dari title
-    public function generateSlug(Request $request)
+    /**
+     * Generate unique slug from title
+     */
+    private function generateUniqueSlug($title, $excludeId = null)
     {
-        $title = $request->input('title');
         $slug = Str::slug($title);
-        
-        // Cek apakah slug sudah ada, jika ya tambahkan angka
         $originalSlug = $slug;
         $counter = 1;
         
-        while (Project::where('slug', $slug)->exists()) {
+        $query = Project::where('slug', $slug);
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+        
+        while ($query->exists()) {
             $slug = $originalSlug . '-' . $counter;
             $counter++;
+            
+            $query = Project::where('slug', $slug);
+            if ($excludeId) {
+                $query->where('id', '!=', $excludeId);
+            }
         }
+        
+        return $slug;
+    }
+
+    /**
+     * Generate slug from title (AJAX endpoint)
+     */
+    public function generateSlug(Request $request)
+    {
+        $title = $request->input('title');
+        $excludeId = $request->input('exclude_id');
+        
+        $slug = $this->generateUniqueSlug($title, $excludeId);
         
         return response()->json(['slug' => $slug]);
     }

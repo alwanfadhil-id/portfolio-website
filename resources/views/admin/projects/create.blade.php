@@ -108,23 +108,17 @@
 
                             <!-- Tech Stack -->
                             <div class="mb-4">
-                                <label for="tech_stack" class="form-label fw-bold">
-                                    <i class="fas fa-code me-2"></i>Tech Stack
+                                <label for="tech_stack_input" class="form-label fw-bold">
+                                    <i class="fas fa-code me-2"></i>Tech Stack <span class="text-danger">*</span>
                                 </label>
-                                <select id="tech_stack" 
-                                        name="tech_stack[]" 
-                                        multiple 
-                                        class="form-select @error('tech_stack') is-invalid @enderror"
-                                        size="4">
-                                    @foreach(['Laravel', 'React', 'Vue.js', 'Angular', 'Node.js', 'PHP', 'JavaScript', 'TypeScript', 'Python', 'MySQL', 'PostgreSQL', 'MongoDB', 'Bootstrap', 'Tailwind CSS', 'Docker', 'Git'] as $tech)
-                                        <option value="{{ $tech }}" {{ in_array($tech, old('tech_stack', [])) ? 'selected' : '' }}>
-                                            {{ $tech }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                                <input type="text" 
+                                       id="tech_stack_input" 
+                                       class="form-control @error('tech_stack') is-invalid @enderror"
+                                       placeholder="Ketik teknologi dan tekan Enter untuk menambahkan">
+                                <div id="tech_stack_container" class="mt-2"></div>
                                 <div class="form-text">
                                     <i class="fas fa-info-circle me-1"></i>
-                                    Pilih teknologi yang digunakan dalam proyek ini (bisa memilih lebih dari satu)
+                                    Ketik nama teknologi dan tekan Enter untuk menambahkan ke daftar
                                 </div>
                                 @error('tech_stack')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -164,6 +158,43 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
+                            </div>
+
+                            <!-- Status -->
+                            <div class="mb-4">
+                                <label for="status" class="form-label fw-bold">
+                                    <i class="fas fa-toggle-on me-2"></i>Status Proyek
+                                </label>
+                                <select id="status" 
+                                        name="status" 
+                                        class="form-select @error('status') is-invalid @enderror"
+                                        required>
+                                    <option value="draft" {{ old('status', 'draft') === 'draft' ? 'selected' : '' }}>
+                                        Draft
+                                    </option>
+                                    <option value="published" {{ old('status') === 'published' ? 'selected' : '' }}>
+                                        Published
+                                    </option>
+                                </select>
+                                @error('status')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <!-- Featured -->
+                            <div class="mb-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" 
+                                           type="checkbox" 
+                                           id="featured" 
+                                           name="featured" 
+                                           value="1" 
+                                           {{ old('featured') ? 'checked' : '' }}>
+                                    <label class="form-check-label fw-bold" for="featured">
+                                        <i class="fas fa-star me-2"></i>Proyek Unggulan
+                                    </label>
+                                </div>
+                                <div class="form-text">Centang jika proyek ini ingin ditampilkan sebagai proyek unggulan</div>
                             </div>
 
                             <!-- Action Buttons -->
@@ -213,62 +244,111 @@
 </section>
 
 <script>
-// Image Preview Functionality
-document.getElementById('image').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    const preview = document.getElementById('imagePreview');
-    const previewImg = document.getElementById('previewImg');
-    
-    if (file) {
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-            alert('Please select a valid image file');
-            this.value = '';
+document.addEventListener('DOMContentLoaded', function() {
+    // Tech Stack Management
+    const techStackInput = document.getElementById('tech_stack_input');
+    const techStackContainer = document.getElementById('tech_stack_container');
+    let techStack = @json(old('tech_stack', []));
+
+    // Render existing tech stack
+    renderTechStack();
+
+    // Add tech on Enter key
+    techStackInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const tech = this.value.trim();
+            if (tech && !techStack.includes(tech)) {
+                techStack.push(tech);
+                renderTechStack();
+                this.value = '';
+            }
+        }
+    });
+
+    function renderTechStack() {
+        techStackContainer.innerHTML = '';
+        techStack.forEach((tech, index) => {
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-primary me-1 mb-1';
+            badge.innerHTML = `
+                ${tech}
+                <button type="button" class="btn-close btn-close-white ms-1" style="font-size: 0.6rem;" onclick="removeTech(${index})"></button>
+                <input type="hidden" name="tech_stack[]" value="${tech}">
+            `;
+            techStackContainer.appendChild(badge);
+        });
+    }
+
+    // Make removeTech function global
+    window.removeTech = function(index) {
+        techStack.splice(index, 1);
+        renderTechStack();
+    };
+
+    // Image Preview Functionality
+    document.getElementById('image').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        const preview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+        
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please select a valid image file');
+                this.value = '';
+                preview.style.display = 'none';
+                return;
+            }
+            
+            // Validate file size (2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                alert('File size must be less than 2MB');
+                this.value = '';
+                preview.style.display = 'none';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        } else {
             preview.style.display = 'none';
+        }
+    });
+
+    // Form Validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const title = document.getElementById('title').value.trim();
+        const description = document.getElementById('description').value.trim();
+        const image = document.getElementById('image').files[0];
+        
+        if (!title || !description || !image) {
+            e.preventDefault();
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        if (techStack.length === 0) {
+            e.preventDefault();
+            alert('Please add at least one technology to the tech stack');
             return;
         }
         
-        // Validate file size (2MB)
-        if (file.size > 2 * 1024 * 1024) {
-            alert('File size must be less than 2MB');
-            this.value = '';
-            preview.style.display = 'none';
-            return;
-        }
-        
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            previewImg.src = e.target.result;
-            preview.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-    } else {
-        preview.style.display = 'none';
-    }
-});
+        // Show loading state
+        const submitBtn = document.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan...';
+    });
 
-// Form Validation
-document.querySelector('form').addEventListener('submit', function(e) {
-    const title = document.getElementById('title').value.trim();
-    const description = document.getElementById('description').value.trim();
-    const image = document.getElementById('image').files[0];
-    
-    if (!title || !description || !image) {
-        e.preventDefault();
-        alert('Please fill in all required fields');
-        return;
-    }
-    
-    // Show loading state
-    const submitBtn = document.querySelector('button[type="submit"]');
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan...';
-});
-
-// Tech Stack Selection Enhancement
-document.getElementById('tech_stack').addEventListener('change', function() {
-    const selected = Array.from(this.selectedOptions).map(option => option.value);
-    console.log('Selected technologies:', selected);
+    // Auto-resize textarea
+    document.getElementById('description').addEventListener('input', function(e) {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
 });
 </script>
 @endsection
