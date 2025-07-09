@@ -11,21 +11,52 @@ class ProjectController extends Controller
 {
     protected $cloudinary;
 
-    public function __construct(CloudinaryHelper $cloudinary)
+    public function __construct()
     {
-        $this->cloudinary = $cloudinary;
+        // Sementara comment CloudinaryHelper untuk test
+        // $this->cloudinary = $cloudinary;
     }
 
     /**
-     * Display a listing of projects
+     * Display a listing of projects - Simple version for debugging
      */
     public function index()
     {
-        $projects = Project::published()
-            ->latest()
-            ->paginate(9);
-
-        return view('projects.index', compact('projects'));
+        try {
+            // Test query step by step
+            \Log::info('Starting project index method');
+            
+            // 1. Get all projects first
+            $allProjects = Project::all();
+            \Log::info('All projects count: ' . $allProjects->count());
+            
+            // 2. Get published projects
+            $publishedProjects = Project::where('status', 'published')->get();
+            \Log::info('Published projects count: ' . $publishedProjects->count());
+            
+            // 3. Get with pagination
+            $projects = Project::where('status', 'published')
+                ->orderBy('created_at', 'desc')
+                ->paginate(9);
+            
+            \Log::info('Paginated projects count: ' . $projects->count());
+            \Log::info('Paginated projects total: ' . $projects->total());
+            
+            // 4. Test each project
+            foreach ($projects as $project) {
+                \Log::info('Project: ' . $project->title . ' - Status: ' . $project->status);
+            }
+            
+            return view('projects.index', compact('projects'));
+            
+        } catch (\Exception $e) {
+            \Log::error('Error in project index: ' . $e->getMessage());
+            \Log::error('File: ' . $e->getFile() . ':' . $e->getLine());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            // Return error view or redirect
+            return view('projects.index', ['projects' => collect()->paginate(9)]);
+        }
     }
 
     /**
@@ -58,20 +89,10 @@ class ProjectController extends Controller
         // Auto-generate slug from title
         $projectData['slug'] = $this->generateUniqueSlug($validated['title']);
         
-        // Handle image upload
-        if ($request->hasFile('image')) {
-            $uploadResult = $this->cloudinary->uploadImage(
-                $request->file('image'),
-                'projects'
-            );
-
-            if ($uploadResult['success']) {
-                $projectData['image_public_id'] = $uploadResult['public_id'];
-                $projectData['image'] = $uploadResult['url'];
-            } else {
-                return back()->with('error', 'Failed to upload image: ' . $uploadResult['message']);
-            }
-        }
+        // Skip image upload for now
+        // if ($request->hasFile('image')) {
+        //     // Handle image upload later
+        // }
 
         $project = Project::create($projectData);
 
@@ -84,30 +105,8 @@ class ProjectController extends Controller
      */
     public function show(Project $project)
     {
-        // Get related projects (same tech stack or recent)
-        $relatedProjects = Project::published()
-            ->where('id', '!=', $project->id)
-            ->where(function ($query) use ($project) {
-                if ($project->tech_stack) {
-                    foreach ($project->tech_stack as $tech) {
-                        $query->orWhereJsonContains('tech_stack', $tech);
-                    }
-                }
-            })
-            ->latest()
-            ->take(3)
-            ->get();
-
-        // If no related projects found, get latest projects
-        if ($relatedProjects->count() < 3) {
-            $relatedProjects = Project::published()
-                ->where('id', '!=', $project->id)
-                ->latest()
-                ->take(3)
-                ->get();
-        }
-
-        return view('projects.show', compact('project', 'relatedProjects'));
+        // Simple version without related projects for now
+        return view('projects.show', compact('project'));
     }
 
     /**
@@ -142,33 +141,6 @@ class ProjectController extends Controller
             $projectData['slug'] = $this->generateUniqueSlug($validated['title'], $project->id);
         }
 
-        // Handle image upload
-        if ($request->hasFile('image')) {
-            // Delete old image if exists
-            if ($project->image_public_id) {
-                $this->cloudinary->deleteImage($project->image_public_id);
-            }
-
-            $uploadResult = $this->cloudinary->uploadImage(
-                $request->file('image'),
-                'projects'
-            );
-
-            if ($uploadResult['success']) {
-                $projectData['image_public_id'] = $uploadResult['public_id'];
-                $projectData['image'] = $uploadResult['url'];
-            } else {
-                return back()->with('error', 'Failed to upload image: ' . $uploadResult['message']);
-            }
-        } elseif ($request->has('remove_image')) {
-            // Remove image if requested
-            if ($project->image_public_id) {
-                $this->cloudinary->deleteImage($project->image_public_id);
-            }
-            $projectData['image_public_id'] = null;
-            $projectData['image'] = null;
-        }
-
         $project->update($projectData);
 
         return redirect()->route('projects.show', $project)
@@ -180,11 +152,6 @@ class ProjectController extends Controller
      */
     public function destroy(Project $project)
     {
-        // Delete image from Cloudinary
-        if ($project->image_public_id) {
-            $this->cloudinary->deleteImage($project->image_public_id);
-        }
-
         $project->delete();
 
         return redirect()->route('projects.index')
