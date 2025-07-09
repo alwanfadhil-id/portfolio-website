@@ -22,7 +22,37 @@ class ProjectController extends Controller
      */
     public function index()
     {
-       
+        try {
+            
+            
+            // 1. Get all projects first
+            $allProjects = Project::all();
+            
+            
+            // 2. Get published projects
+            $publishedProjects = Project::where('status', 'published')->get();
+           
+            
+            // 3. Get with pagination
+            $projects = Project::where('status', 'published')
+                ->orderBy('created_at', 'desc')
+                ->paginate(9);
+            
+           
+            
+            // 4. Test each project
+            foreach ($projects as $project) {
+                
+            }
+            
+            return view('projects.index', compact('projects'));
+            
+        } catch (\Exception $e) {
+            
+            
+            // Return error view or redirect
+            return view('projects.index', ['projects' => collect()->paginate(9)]);
+        }
     }
 
     /**
