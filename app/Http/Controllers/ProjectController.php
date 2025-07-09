@@ -22,41 +22,7 @@ class ProjectController extends Controller
      */
     public function index()
     {
-        try {
-            // Test query step by step
-            \Log::info('Starting project index method');
-            
-            // 1. Get all projects first
-            $allProjects = Project::all();
-            \Log::info('All projects count: ' . $allProjects->count());
-            
-            // 2. Get published projects
-            $publishedProjects = Project::where('status', 'published')->get();
-            \Log::info('Published projects count: ' . $publishedProjects->count());
-            
-            // 3. Get with pagination
-            $projects = Project::where('status', 'published')
-                ->orderBy('created_at', 'desc')
-                ->paginate(9);
-            
-            \Log::info('Paginated projects count: ' . $projects->count());
-            \Log::info('Paginated projects total: ' . $projects->total());
-            
-            // 4. Test each project
-            foreach ($projects as $project) {
-                \Log::info('Project: ' . $project->title . ' - Status: ' . $project->status);
-            }
-            
-            return view('projects.index', compact('projects'));
-            
-        } catch (\Exception $e) {
-            \Log::error('Error in project index: ' . $e->getMessage());
-            \Log::error('File: ' . $e->getFile() . ':' . $e->getLine());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
-            
-            // Return error view or redirect
-            return view('projects.index', ['projects' => collect()->paginate(9)]);
-        }
+       
     }
 
     /**
