@@ -15,16 +15,6 @@
     </div>
 </section>
 
-<!-- DEBUG INFO -->
-<div class="container mt-3">
-    <div class="alert alert-info">
-        <strong>Debug Info:</strong> 
-        Projects count: {{ $projects->count() }} | 
-        Total: {{ $projects->total() }} | 
-        Current page: {{ $projects->currentPage() }}
-    </div>
-</div>
-
 <!-- Projects Grid -->
 <section class="py-5">
     <div class="container">
@@ -33,11 +23,28 @@
             @foreach($projects as $project)
             <div class="col-lg-4 col-md-6 mb-4">
                 <div class="card project-card h-100">
-                    <!-- Simple image placeholder -->
-                    <div class="card-img-container position-relative">
-                        <div class="card-img-top d-flex align-items-center justify-content-center bg-light" 
-                             style="height: 250px;">
-                            <i class="fas fa-code fa-3x text-muted"></i>
+                    <!-- Project Image -->
+                    <div class="card-img-container position-relative overflow-hidden">
+                        @if($project->image)
+                            <img src="{{ \App\Helpers\ImageOptimizer::getOptimizedImageUrl($project->image, 400, 250) }}" 
+                                 class="card-img-top" 
+                                 alt="{{ $project->title }}"
+                                 style="height: 250px; object-fit: cover; width: 100%;"
+                                 loading="lazy">
+                        @else
+                            <img src="https://via.placeholder.com/400x250/667eea/ffffff?text={{ urlencode($project->title) }}" 
+                                 class="card-img-top" 
+                                 alt="{{ $project->title }}"
+                                 style="height: 250px; object-fit: cover; width: 100%;"
+                                 loading="lazy">
+                        @endif
+                        
+                        <!-- Hover Overlay -->
+                        <div class="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 opacity-0 project-overlay d-flex align-items-center justify-content-center">
+                            <div class="text-white text-center">
+                                <i class="fas fa-eye fa-2x mb-2"></i>
+                                <p class="mb-0">View Project</p>
+                            </div>
                         </div>
                         
                         @if($project->featured)
@@ -55,7 +62,7 @@
                         <div class="mb-3">
                             @if($project->tech_stack && is_array($project->tech_stack))
                                 @foreach($project->tech_stack as $tech)
-                                    <span class="badge bg-secondary me-1">{{ $tech }}</span>
+                                    <span class="tech-badge">{{ $tech }}</span>
                                 @endforeach
                             @else
                                 <span class="text-muted">No tech stack</span>
@@ -66,12 +73,12 @@
                         <div class="mt-auto">
                             <div class="d-flex gap-2">
                                 @if($project->link_demo)
-                                    <a href="{{ $project->link_demo }}" class="btn btn-primary btn-sm" target="_blank">
+                                    <a href="{{ $project->link_demo }}" class="btn btn-primary btn-sm" target="_blank" rel="noopener">
                                         <i class="fas fa-external-link-alt"></i> Demo
                                     </a>
                                 @endif
                                 @if($project->link_github)
-                                    <a href="{{ $project->link_github }}" class="btn btn-outline-secondary btn-sm" target="_blank">
+                                    <a href="{{ $project->link_github }}" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener">
                                         <i class="fab fa-github"></i> Code
                                     </a>
                                 @endif
@@ -117,6 +124,7 @@
 .project-card {
     transition: all 0.3s ease;
     border: 1px solid #dee2e6;
+    overflow: hidden;
 }
 
 .project-card:hover {
@@ -124,8 +132,66 @@
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
 
+.project-card:hover .project-overlay {
+    opacity: 1 !important;
+}
+
 .card-img-container {
     overflow: hidden;
+    position: relative;
+}
+
+.project-overlay {
+    transition: opacity 0.3s ease;
+}
+
+.tech-badge {
+    display: inline-block;
+    background: #f8f9fa;
+    color: #6c757d;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-right: 0.25rem;
+    margin-bottom: 0.25rem;
+    border: 1px solid #dee2e6;
+}
+
+.card-img-top {
+    transition: transform 0.3s ease;
+}
+
+.project-card:hover .card-img-top {
+    transform: scale(1.05);
 }
 </style>
+@endpush
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Hover effect untuk project cards
+    const projectCards = document.querySelectorAll('.project-card');
+    projectCards.forEach(card => {
+        const overlay = card.querySelector('.project-overlay');
+        if (overlay) {
+            card.addEventListener('mouseenter', function() {
+                overlay.style.opacity = '1';
+            });
+            card.addEventListener('mouseleave', function() {
+                overlay.style.opacity = '0';
+            });
+        }
+    });
+
+    // Error handling untuk gambar yang gagal dimuat
+    const projectImages = document.querySelectorAll('.project-card img');
+    projectImages.forEach(img => {
+        img.addEventListener('error', function() {
+            this.src = 'https://via.placeholder.com/400x250/667eea/ffffff?text=' + encodeURIComponent('Project Image');
+        });
+    });
+});
+</script>
 @endpush
